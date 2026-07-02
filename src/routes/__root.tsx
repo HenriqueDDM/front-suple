@@ -80,11 +80,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Supl — Gestão de Loja de Suplementos" },
+      {
+        name: "description",
+        content:
+          "SaaS completo para gerenciar produtos, vendas, estoque, clientes e relatórios da sua loja de suplementos.",
+      },
+      { name: "author", content: "Supl" },
+      { property: "og:title", content: "Supl — Gestão de Loja de Suplementos" },
+      {
+        property: "og:description",
+        content:
+          "SaaS completo para gerenciar produtos, vendas, estoque, clientes e relatórios da sua loja de suplementos.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
