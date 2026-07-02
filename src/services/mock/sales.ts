@@ -72,10 +72,16 @@ export const sales: Sale[] = [
 ];
 
 // Sales for the last 30 days chart.
+// Deterministic pseudo-random so SSR and client render identical values (no hydration mismatch).
+const pseudoRandom = (i: number) => {
+  const x = Math.sin(i * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+};
+
 export const salesTrend = Array.from({ length: 30 }).map((_, i) => {
   const date = new Date();
   date.setDate(date.getDate() - (29 - i));
-  const base = 800 + Math.round(Math.sin(i / 3) * 350 + Math.random() * 400);
+  const base = 800 + Math.round(Math.sin(i / 3) * 350 + pseudoRandom(i) * 400);
   return {
     date: date.toISOString().slice(0, 10),
     label: date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
