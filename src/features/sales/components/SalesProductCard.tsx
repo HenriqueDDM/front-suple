@@ -1,0 +1,36 @@
+import { memo, useCallback } from "react";
+import type { Product } from "@/types";
+import { ProductThumbnail } from "@/shared/components/ProductThumbnail";
+import { formatCurrency } from "@/shared/utils/format";
+
+interface SalesProductCardProps {
+  product: Product;
+  onAddToCart: (product: Product) => void;
+}
+
+export const SalesProductCard = memo(function SalesProductCard({
+  product,
+  onAddToCart,
+}: SalesProductCardProps) {
+  const handleClick = useCallback(() => onAddToCart(product), [onAddToCart, product]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-label={`Adicionar ${product.name} ao carrinho`}
+      className="flex items-center gap-3 rounded-lg border border-border p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-accent"
+    >
+      <ProductThumbnail
+        imageUrl={product.imageUrl}
+        name={product.name}
+        subtitle={product.brand}
+        size="lg"
+        className="flex-1"
+      />
+      <span className="shrink-0 text-sm font-semibold text-primary">
+        {formatCurrency(product.salePrice)}
+      </span>
+    </button>
+  );
+});

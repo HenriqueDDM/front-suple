@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SalesPage } from "@/pages/SalesPage";
+import { lazyPage } from "@/shared/lib/lazyPage";
+
+const salesPage = lazyPage(() => import("@/features/sales"), "SalesPage");
 
 export const Route = createFileRoute("/_app/vendas")({
-  head: () => ({
-    meta: [{ title: "Vendas — Supl" }],
-  }),
-  component: SalesPage,
+  ...salesPage,
 });

@@ -1,5 +1,7 @@
 // Domain types — shaped to match a future NestJS backend.
 
+export type * from "./api";
+
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 export interface Product {

@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SettingsPage } from "@/pages/SettingsPage";
+import { lazyPage } from "@/shared/lib/lazyPage";
+
+const settingsPage = lazyPage(() => import("@/features/settings"), "SettingsPage");
 
 export const Route = createFileRoute("/_app/configuracoes")({
-  head: () => ({
-    meta: [{ title: "Configurações — Supl" }],
-  }),
-  component: SettingsPage,
+  ...settingsPage,
 });
