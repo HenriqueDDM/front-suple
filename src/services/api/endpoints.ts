@@ -2,12 +2,16 @@ export const API_ENDPOINTS = {
   products: {
     list: "/products",
     byId: (id: string) => `/products/${id}`,
+    sales: (id: string) => `/products/${id}/sales`,
+    profile: (id: string) => `/products/${id}/profile`,
     categories: "/products/categories",
     suppliers: "/products/suppliers",
   },
   customers: {
     list: "/customers",
     byId: (id: string) => `/customers/${id}`,
+    purchases: (id: string) => `/customers/${id}/purchases`,
+    profile: (id: string) => `/customers/${id}/profile`,
   },
   sales: {
     list: "/sales",

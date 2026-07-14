@@ -62,7 +62,7 @@ export function CustomersPage() {
     <>
       <PageHeader
         title="Clientes"
-        description="Gerencie a base de clientes da loja."
+        description="Gerencie a base de clientes da loja. Clique em um cliente para ver o perfil."
         actions={
           <Button onClick={handleOpenCreate}>
             <Plus className="h-4 w-4" /> Novo Cliente

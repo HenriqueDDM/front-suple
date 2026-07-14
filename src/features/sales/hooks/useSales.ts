@@ -20,9 +20,15 @@ export function useSales() {
     mutationFn: (dto: CreateSaleDto) => salesService.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stock.movements });
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.reports.sales });
       queryClient.invalidateQueries({ queryKey: queryKeys.reports.dashboard });
-      queryClient.invalidateQueries({ queryKey: queryKeys.reports.summary });
+      queryClient.invalidateQueries({ queryKey: ["reports", "summary"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "sales-trend"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "sales-by-category"] });
+      queryClient.invalidateQueries({ queryKey: ["reports", "top-products"] });
     },
   });
 
@@ -31,5 +37,6 @@ export function useSales() {
     isLoading,
     error,
     createSale: createMutation.mutateAsync,
+    isCreating: createMutation.isPending,
   };
 }

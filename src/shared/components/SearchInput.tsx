@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, type KeyboardEventHandler } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 interface SearchInputProps {
   value?: string;
   onChange?: (value: string) => void;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+  onFocus?: () => void;
   placeholder?: string;
   className?: string;
   readOnly?: boolean;
@@ -15,6 +17,8 @@ interface SearchInputProps {
 export const SearchInput = memo(function SearchInput({
   value = "",
   onChange,
+  onKeyDown,
+  onFocus,
   placeholder = "Pesquisar...",
   className,
   readOnly = false,
@@ -26,10 +30,13 @@ export const SearchInput = memo(function SearchInput({
       <Input
         value={value}
         onChange={onChange ? (event) => onChange(event.target.value) : undefined}
+        onKeyDown={onKeyDown}
+        onFocus={onFocus}
         placeholder={placeholder}
         className="pl-9"
         readOnly={readOnly}
         aria-label={ariaLabel ?? placeholder}
+        autoComplete="off"
       />
     </div>
   );

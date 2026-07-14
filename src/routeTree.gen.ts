@@ -10,18 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as AppVendasRouteImport } from './routes/_app.vendas'
-import { Route as AppRelatoriosRouteImport } from './routes/_app.relatorios'
-import { Route as AppProdutosRouteImport } from './routes/_app.produtos'
-import { Route as AppEstoqueRouteImport } from './routes/_app.estoque'
-import { Route as AppConfiguracoesRouteImport } from './routes/_app.configuracoes'
-import { Route as AppClientesRouteImport } from './routes/_app.clientes'
+import { Route as AppStockRouteImport } from './routes/_app.stock'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppSalesRouteImport } from './routes/_app.sales'
+import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppProductsRouteImport } from './routes/_app.products'
+import { Route as AppCustomersRouteImport } from './routes/_app.customers'
+import { Route as AppProductsProductIdRouteImport } from './routes/_app.products_.$productId'
+import { Route as AppCustomersCustomerIdRouteImport } from './routes/_app.customers_.$customerId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -33,105 +41,134 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppVendasRoute = AppVendasRouteImport.update({
-  id: '/vendas',
-  path: '/vendas',
+const AppStockRoute = AppStockRouteImport.update({
+  id: '/stock',
+  path: '/stock',
   getParentRoute: () => AppRoute,
 } as any)
-const AppRelatoriosRoute = AppRelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppProdutosRoute = AppProdutosRouteImport.update({
-  id: '/produtos',
-  path: '/produtos',
+const AppSalesRoute = AppSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
   getParentRoute: () => AppRoute,
 } as any)
-const AppEstoqueRoute = AppEstoqueRouteImport.update({
-  id: '/estoque',
-  path: '/estoque',
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AppRoute,
 } as any)
-const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
+const AppProductsRoute = AppProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
   getParentRoute: () => AppRoute,
 } as any)
-const AppClientesRoute = AppClientesRouteImport.update({
-  id: '/clientes',
-  path: '/clientes',
+const AppCustomersRoute = AppCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductsProductIdRoute = AppProductsProductIdRouteImport.update({
+  id: '/products_/$productId',
+  path: '/products/$productId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCustomersCustomerIdRoute = AppCustomersCustomerIdRouteImport.update({
+  id: '/customers_/$customerId',
+  path: '/customers/$customerId',
   getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/clientes': typeof AppClientesRoute
-  '/configuracoes': typeof AppConfiguracoesRoute
-  '/estoque': typeof AppEstoqueRoute
-  '/produtos': typeof AppProdutosRoute
-  '/relatorios': typeof AppRelatoriosRoute
-  '/vendas': typeof AppVendasRoute
+  '/customers': typeof AppCustomersRoute
+  '/products': typeof AppProductsRoute
+  '/reports': typeof AppReportsRoute
+  '/sales': typeof AppSalesRoute
+  '/settings': typeof AppSettingsRoute
+  '/stock': typeof AppStockRoute
+  '/customers/$customerId': typeof AppCustomersCustomerIdRoute
+  '/products/$productId': typeof AppProductsProductIdRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/clientes': typeof AppClientesRoute
-  '/configuracoes': typeof AppConfiguracoesRoute
-  '/estoque': typeof AppEstoqueRoute
-  '/produtos': typeof AppProdutosRoute
-  '/relatorios': typeof AppRelatoriosRoute
-  '/vendas': typeof AppVendasRoute
+  '/customers': typeof AppCustomersRoute
+  '/products': typeof AppProductsRoute
+  '/reports': typeof AppReportsRoute
+  '/sales': typeof AppSalesRoute
+  '/settings': typeof AppSettingsRoute
+  '/stock': typeof AppStockRoute
   '/': typeof AppIndexRoute
+  '/customers/$customerId': typeof AppCustomersCustomerIdRoute
+  '/products/$productId': typeof AppProductsProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_app/clientes': typeof AppClientesRoute
-  '/_app/configuracoes': typeof AppConfiguracoesRoute
-  '/_app/estoque': typeof AppEstoqueRoute
-  '/_app/produtos': typeof AppProdutosRoute
-  '/_app/relatorios': typeof AppRelatoriosRoute
-  '/_app/vendas': typeof AppVendasRoute
+  '/_app/customers': typeof AppCustomersRoute
+  '/_app/products': typeof AppProductsRoute
+  '/_app/reports': typeof AppReportsRoute
+  '/_app/sales': typeof AppSalesRoute
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/stock': typeof AppStockRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/customers_/$customerId': typeof AppCustomersCustomerIdRoute
+  '/_app/products_/$productId': typeof AppProductsProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/sitemap.xml'
-    | '/clientes'
-    | '/configuracoes'
-    | '/estoque'
-    | '/produtos'
-    | '/relatorios'
-    | '/vendas'
+    | '/customers'
+    | '/products'
+    | '/reports'
+    | '/sales'
+    | '/settings'
+    | '/stock'
+    | '/customers/$customerId'
+    | '/products/$productId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/login'
     | '/sitemap.xml'
-    | '/clientes'
-    | '/configuracoes'
-    | '/estoque'
-    | '/produtos'
-    | '/relatorios'
-    | '/vendas'
+    | '/customers'
+    | '/products'
+    | '/reports'
+    | '/sales'
+    | '/settings'
+    | '/stock'
     | '/'
+    | '/customers/$customerId'
+    | '/products/$productId'
   id:
     | '__root__'
     | '/_app'
+    | '/login'
     | '/sitemap.xml'
-    | '/_app/clientes'
-    | '/_app/configuracoes'
-    | '/_app/estoque'
-    | '/_app/produtos'
-    | '/_app/relatorios'
-    | '/_app/vendas'
+    | '/_app/customers'
+    | '/_app/products'
+    | '/_app/reports'
+    | '/_app/sales'
+    | '/_app/settings'
+    | '/_app/stock'
     | '/_app/'
+    | '/_app/customers_/$customerId'
+    | '/_app/products_/$productId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -142,6 +179,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -158,75 +202,94 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/vendas': {
-      id: '/_app/vendas'
-      path: '/vendas'
-      fullPath: '/vendas'
-      preLoaderRoute: typeof AppVendasRouteImport
+    '/_app/stock': {
+      id: '/_app/stock'
+      path: '/stock'
+      fullPath: '/stock'
+      preLoaderRoute: typeof AppStockRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/relatorios': {
-      id: '/_app/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof AppRelatoriosRouteImport
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/produtos': {
-      id: '/_app/produtos'
-      path: '/produtos'
-      fullPath: '/produtos'
-      preLoaderRoute: typeof AppProdutosRouteImport
+    '/_app/sales': {
+      id: '/_app/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AppSalesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/estoque': {
-      id: '/_app/estoque'
-      path: '/estoque'
-      fullPath: '/estoque'
-      preLoaderRoute: typeof AppEstoqueRouteImport
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/configuracoes': {
-      id: '/_app/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/configuracoes'
-      preLoaderRoute: typeof AppConfiguracoesRouteImport
+    '/_app/products': {
+      id: '/_app/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof AppProductsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/clientes': {
-      id: '/_app/clientes'
-      path: '/clientes'
-      fullPath: '/clientes'
-      preLoaderRoute: typeof AppClientesRouteImport
+    '/_app/customers': {
+      id: '/_app/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AppCustomersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/products_/$productId': {
+      id: '/_app/products_/$productId'
+      path: '/products/$productId'
+      fullPath: '/products/$productId'
+      preLoaderRoute: typeof AppProductsProductIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/customers_/$customerId': {
+      id: '/_app/customers_/$customerId'
+      path: '/customers/$customerId'
+      fullPath: '/customers/$customerId'
+      preLoaderRoute: typeof AppCustomersCustomerIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
 }
 
 interface AppRouteChildren {
-  AppClientesRoute: typeof AppClientesRoute
-  AppConfiguracoesRoute: typeof AppConfiguracoesRoute
-  AppEstoqueRoute: typeof AppEstoqueRoute
-  AppProdutosRoute: typeof AppProdutosRoute
-  AppRelatoriosRoute: typeof AppRelatoriosRoute
-  AppVendasRoute: typeof AppVendasRoute
+  AppCustomersRoute: typeof AppCustomersRoute
+  AppProductsRoute: typeof AppProductsRoute
+  AppReportsRoute: typeof AppReportsRoute
+  AppSalesRoute: typeof AppSalesRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppStockRoute: typeof AppStockRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
+  AppProductsProductIdRoute: typeof AppProductsProductIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppClientesRoute: AppClientesRoute,
-  AppConfiguracoesRoute: AppConfiguracoesRoute,
-  AppEstoqueRoute: AppEstoqueRoute,
-  AppProdutosRoute: AppProdutosRoute,
-  AppRelatoriosRoute: AppRelatoriosRoute,
-  AppVendasRoute: AppVendasRoute,
+  AppCustomersRoute: AppCustomersRoute,
+  AppProductsRoute: AppProductsRoute,
+  AppReportsRoute: AppReportsRoute,
+  AppSalesRoute: AppSalesRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppStockRoute: AppStockRoute,
   AppIndexRoute: AppIndexRoute,
+  AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
+  AppProductsProductIdRoute: AppProductsProductIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Dumbbell, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/shared/constants/navigation";
+import { useSettings } from "@/features/settings/hooks/useSettings";
 
 export const Sidebar = memo(function Sidebar({
   mobileOpen,
@@ -12,6 +13,10 @@ export const Sidebar = memo(function Sidebar({
   onClose: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { storeSettings } = useSettings();
+
+  const brandName = storeSettings?.name?.trim() || "Supl";
+  const logoUrl = storeSettings?.logoUrl?.trim() || "";
 
   const isActive = (url: string, exact?: boolean) =>
     exact ? pathname === url : pathname === url || pathname.startsWith(url + "/");
@@ -33,17 +38,25 @@ export const Sidebar = memo(function Sidebar({
         aria-label="Menu principal"
       >
         <div className="flex h-16 items-center justify-between gap-2 px-5">
-          <Link to="/" className="flex items-center gap-2.5" onClick={onClose}>
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <Dumbbell className="h-5 w-5" />
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-sidebar-foreground">
-              Supl
+          <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={onClose}>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-9 w-9 shrink-0 rounded-xl object-cover"
+              />
+            ) : (
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
+                <Dumbbell className="h-5 w-5" />
+              </div>
+            )}
+            <span className="truncate text-lg font-semibold tracking-tight text-sidebar-foreground">
+              {brandName}
             </span>
           </Link>
           <button
             type="button"
-            className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent lg:hidden"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent lg:hidden"
             onClick={onClose}
             aria-label="Fechar menu"
           >
@@ -58,6 +71,7 @@ export const Sidebar = memo(function Sidebar({
               <Link
                 key={item.url}
                 to={item.url}
+                {...(item.search ? { search: item.search as never } : {})}
                 onClick={onClose}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",

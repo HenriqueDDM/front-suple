@@ -14,14 +14,20 @@ export interface NavItem {
   url: string;
   icon: LucideIcon;
   exact?: boolean;
+  search?: Record<string, string>;
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, exact: true },
-  { title: "Produtos", url: "/produtos", icon: Package },
-  { title: "Clientes", url: "/clientes", icon: Users },
-  { title: "Vendas", url: "/vendas", icon: ShoppingCart },
-  { title: "Estoque", url: "/estoque", icon: Boxes },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
+  { title: "Produtos", url: "/products", icon: Package },
+  { title: "Clientes", url: "/customers", icon: Users },
+  { title: "Vendas", url: "/sales", icon: ShoppingCart },
+  { title: "Estoque", url: "/stock", icon: Boxes },
+  { title: "Relatórios", url: "/reports", icon: BarChart3 },
+  {
+    title: "Configurações",
+    url: "/settings",
+    icon: Settings,
+    search: { tab: "store" },
+  },
 ];

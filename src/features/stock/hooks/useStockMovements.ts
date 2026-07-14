@@ -20,6 +20,8 @@ export function useStockMovements() {
     mutationFn: (dto: CreateStockMovementDto) => stockService.createMovement(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.stock.movements });
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.reports.dashboard });
     },
   });
 
@@ -27,6 +29,7 @@ export function useStockMovements() {
     items,
     isLoading,
     error,
-    createMovement: createMutation.mutate,
+    createMovement: createMutation.mutateAsync,
+    isCreating: createMutation.isPending,
   };
 }

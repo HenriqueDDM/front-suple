@@ -1,4 +1,5 @@
 import { memo, useCallback } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import type { Product } from "@/types";
 import { ProductThumbnailInline } from "@/shared/components/ProductThumbnail";
 import { StockBadge } from "@/shared/components/StockBadge";
@@ -17,13 +18,23 @@ export const ProductTableRow = memo(function ProductTableRow({
   onEdit,
   onDelete,
 }: ProductTableRowProps) {
+  const navigate = useNavigate();
   const handleEdit = useCallback(() => onEdit(product), [onEdit, product]);
   const handleDelete = useCallback(() => onDelete(product.id), [onDelete, product.id]);
+  const handleViewProfile = useCallback(() => {
+    navigate({ to: "/products/$productId", params: { productId: product.id } });
+  }, [navigate, product.id]);
 
   return (
     <TableRow>
       <TableCell>
-        <ProductThumbnailInline imageUrl={product.imageUrl} name={product.name} />
+        <button
+          type="button"
+          className="text-left"
+          onClick={handleViewProfile}
+        >
+          <ProductThumbnailInline imageUrl={product.imageUrl} name={product.name} />
+        </button>
       </TableCell>
       <TableCell className="text-muted-foreground">{product.brand}</TableCell>
       <TableCell className="text-muted-foreground">{product.category}</TableCell>
@@ -34,7 +45,12 @@ export const ProductTableRow = memo(function ProductTableRow({
         <StockBadge quantity={product.quantity} minStock={product.minStock} />
       </TableCell>
       <TableCell>
-        <TableRowActions onEdit={handleEdit} onDelete={handleDelete} />
+        <TableRowActions
+          onView={handleViewProfile}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          viewLabel="Ver ficha"
+        />
       </TableCell>
     </TableRow>
   );

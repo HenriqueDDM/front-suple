@@ -3,6 +3,7 @@ import type { ApiClient } from "@/services/api/client";
 import type { IReportsService } from "@/services/interfaces";
 import type {
   DashboardStats,
+  ReportPeriod,
   ReportsSummary,
   SalesByCategoryPoint,
   SalesTrendPoint,
@@ -17,23 +18,31 @@ export class HttpReportsService implements IReportsService {
     return this.client.get<Sale[]>(API_ENDPOINTS.sales.list);
   }
 
-  getSalesTrend(): Promise<SalesTrendPoint[]> {
-    return this.client.get<SalesTrendPoint[]>(API_ENDPOINTS.reports.salesTrend);
+  getSalesTrend(period?: ReportPeriod): Promise<SalesTrendPoint[]> {
+    return this.client.get<SalesTrendPoint[]>(API_ENDPOINTS.reports.salesTrend, {
+      params: period,
+    });
   }
 
-  getSalesByCategory(): Promise<SalesByCategoryPoint[]> {
-    return this.client.get<SalesByCategoryPoint[]>(API_ENDPOINTS.reports.salesByCategory);
+  getSalesByCategory(period?: ReportPeriod): Promise<SalesByCategoryPoint[]> {
+    return this.client.get<SalesByCategoryPoint[]>(API_ENDPOINTS.reports.salesByCategory, {
+      params: period,
+    });
   }
 
-  getTopProducts(): Promise<TopProductReport[]> {
-    return this.client.get<TopProductReport[]>(API_ENDPOINTS.reports.topProducts);
+  getTopProducts(period?: ReportPeriod): Promise<TopProductReport[]> {
+    return this.client.get<TopProductReport[]>(API_ENDPOINTS.reports.topProducts, {
+      params: period,
+    });
   }
 
   getDashboardStats(): Promise<DashboardStats> {
     return this.client.get<DashboardStats>(API_ENDPOINTS.reports.dashboard);
   }
 
-  getReportsSummary(): Promise<ReportsSummary> {
-    return this.client.get<ReportsSummary>(API_ENDPOINTS.reports.summary);
+  getReportsSummary(period?: ReportPeriod): Promise<ReportsSummary> {
+    return this.client.get<ReportsSummary>(API_ENDPOINTS.reports.summary, {
+      params: period,
+    });
   }
 }

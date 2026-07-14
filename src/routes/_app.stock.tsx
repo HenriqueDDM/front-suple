@@ -3,6 +3,6 @@ import { lazyPage } from "@/shared/lib/lazyPage";
 
 const stockPage = lazyPage(() => import("@/features/stock"), "StockPage");
 
-export const Route = createFileRoute("/_app/estoque")({
+export const Route = createFileRoute("/_app/stock")({
   ...stockPage,
 });

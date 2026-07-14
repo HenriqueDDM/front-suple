@@ -1,5 +1,6 @@
 import type {
   DashboardStats,
+  ReportPeriod,
   ReportsSummary,
   SalesByCategoryPoint,
   SalesTrendPoint,
@@ -9,9 +10,9 @@ import type { Sale } from "@/types";
 
 export interface IReportsService {
   getSales(): Promise<Sale[]>;
-  getSalesTrend(): Promise<SalesTrendPoint[]>;
-  getSalesByCategory(): Promise<SalesByCategoryPoint[]>;
-  getTopProducts(): Promise<TopProductReport[]>;
+  getSalesTrend(period?: ReportPeriod): Promise<SalesTrendPoint[]>;
+  getSalesByCategory(period?: ReportPeriod): Promise<SalesByCategoryPoint[]>;
+  getTopProducts(period?: ReportPeriod): Promise<TopProductReport[]>;
   getDashboardStats(): Promise<DashboardStats>;
-  getReportsSummary(): Promise<ReportsSummary>;
+  getReportsSummary(period?: ReportPeriod): Promise<ReportsSummary>;
 }

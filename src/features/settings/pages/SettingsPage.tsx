@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Store, Palette, Bell, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { Store, Palette, Bell, Upload, Trash2 } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FormField } from "@/shared/components/forms/FormField";
 import { FormGrid } from "@/shared/components/forms/FormGrid";
@@ -12,10 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 import { Input } from "@/shared/ui/input";
 import { Switch } from "@/shared/ui/switch";
 import { Separator } from "@/shared/ui/separator";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { cn } from "@/lib/utils";
+import { resizeImageToDataUrl } from "@/shared/utils/image";
 import { toast } from "sonner";
+
+type SettingsTab = "store" | "theme" | "prefs";
 
 const EMPTY_STORE_SETTINGS: StoreSettings = {
   name: "",
@@ -44,7 +48,17 @@ const PREFERENCE_ITEMS = [
   },
 ];
 
+function parseSettingsTab(value: unknown): SettingsTab {
+  if (value === "store" || value === "theme" || value === "prefs") {
+    return value;
+  }
+  return "store";
+}
+
 export function SettingsPage() {
+  const navigate = useNavigate({ from: "/settings" });
+  const search = useRouterState({ select: (s) => s.location.search });
+  const activeTab = parseSettingsTab((search as { tab?: unknown }).tab);
   const { theme, setTheme } = useTheme();
   const { storeSettings, updateStoreSettings } = useSettings();
   const { form: store, setField, reset } = useFormState(EMPTY_STORE_SETTINGS);
@@ -53,6 +67,8 @@ export function SettingsPage() {
     salesEmails: false,
     weeklyReport: true,
   });
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (storeSettings) reset(storeSettings);
@@ -63,11 +79,43 @@ export function SettingsPage() {
     toast.success("Dados da loja salvos.");
   };
 
+  const handleLogoPick = async (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem (PNG ou JPG).");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file, 160);
+      setField("logoUrl", dataUrl);
+      toast.success("Logo carregada. Salve as alterações para aplicar.");
+    } catch {
+      toast.error("Não foi possível processar a imagem.");
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setField("logoUrl", "");
+  };
+
+  const setTab = (next: SettingsTab) => {
+    void navigate({
+      to: "/settings",
+      search: { tab: next },
+      replace: true,
+    });
+  };
+
   return (
     <>
-      <PageHeader title="Configurações" description="Ajuste os dados e preferências da loja." />
+      <PageHeader title="Configurações" description="Ajuste dados da loja e preferências." />
 
-      <Tabs defaultValue="store" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(value) => setTab(value as SettingsTab)} className="space-y-6">
         <TabsList>
           <TabsTrigger value="store">
             <Store className="h-4 w-4" /> Loja
@@ -87,15 +135,38 @@ export function SettingsPage() {
               <CardDescription>Informações exibidas em documentos.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <Avatar className="h-16 w-16 rounded-xl">
+                  {store.logoUrl ? (
+                    <AvatarImage src={store.logoUrl} alt={store.name || "Logo"} className="object-cover" />
+                  ) : null}
                   <AvatarFallback className="rounded-xl bg-primary text-lg text-primary-foreground">
-                    {store.name.slice(0, 2).toUpperCase()}
+                    {store.name.slice(0, 2).toUpperCase() || "LJ"}
                   </AvatarFallback>
                 </Avatar>
-                <Button variant="outline">
-                  <Upload className="h-4 w-4" /> Enviar logo
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(event) => void handleLogoPick(event.target.files?.[0])}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isUploadingLogo}
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {isUploadingLogo ? "Processando..." : "Enviar logo"}
+                  </Button>
+                  {store.logoUrl ? (
+                    <Button type="button" variant="ghost" onClick={handleRemoveLogo}>
+                      <Trash2 className="h-4 w-4" /> Remover
+                    </Button>
+                  ) : null}
+                </div>
               </div>
 
               <FormGrid>

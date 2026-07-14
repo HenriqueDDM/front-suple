@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext";
+import { AuthProvider } from "@/shared/contexts/AuthContext";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/sonner";
 import { ApiBootstrap } from "@/shared/components/ApiBootstrap";
@@ -142,15 +143,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ApiBootstrap>
-        <ThemeProvider>
-          <TooltipProvider delayDuration={200}>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-            <Toaster position="top-right" richColors />
-          </TooltipProvider>
-        </ThemeProvider>
-      </ApiBootstrap>
+      <AuthProvider>
+        <ApiBootstrap>
+          <ThemeProvider>
+            <TooltipProvider delayDuration={200}>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+              <Toaster position="top-right" richColors />
+            </TooltipProvider>
+          </ThemeProvider>
+        </ApiBootstrap>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

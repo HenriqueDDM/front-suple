@@ -1,13 +1,32 @@
-import { memo, useCallback, useState } from "react";
-import { Outlet } from "@tanstack/react-router";
+import { memo, useCallback, useEffect, useState } from "react";
+import { Outlet, useNavigate } from "@tanstack/react-router";
 import { Sidebar } from "@/shared/layouts/Sidebar";
 import { Navbar } from "@/shared/layouts/Navbar";
+import { useAuth } from "@/shared/contexts/AuthContext";
+import { env } from "@/config/env";
 
 export const AdminLayout = memo(function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   const handleCloseSidebar = useCallback(() => setMobileOpen(false), []);
   const handleOpenSidebar = useCallback(() => setMobileOpen(true), []);
+
+  useEffect(() => {
+    if (env.useMockApi || isLoading) return;
+    if (!isAuthenticated) {
+      void navigate({ to: "/login" });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (!env.useMockApi && (isLoading || !isAuthenticated)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Carregando...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

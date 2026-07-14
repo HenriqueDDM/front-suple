@@ -1,8 +1,13 @@
 import { API_ENDPOINTS } from "@/services/api/endpoints";
 import type { ApiClient } from "@/services/api/client";
 import type { IProductsService } from "@/services/interfaces";
-import type { Product } from "@/types";
-import type { CreateProductDto, ProductCatalog, UpdateProductDto } from "@/types/api";
+import type { Product, Sale } from "@/types";
+import type {
+  CreateProductDto,
+  ProductCatalog,
+  ProductProfile,
+  UpdateProductDto,
+} from "@/types/api";
 
 export class HttpProductsService implements IProductsService {
   constructor(private readonly client: ApiClient) {}
@@ -17,6 +22,14 @@ export class HttpProductsService implements IProductsService {
     } catch {
       return null;
     }
+  }
+
+  getProfile(id: string): Promise<ProductProfile | null> {
+    return this.client.get<ProductProfile>(API_ENDPOINTS.products.profile(id));
+  }
+
+  getSalesHistory(id: string): Promise<Sale[]> {
+    return this.client.get<Sale[]>(API_ENDPOINTS.products.sales(id));
   }
 
   create(dto: CreateProductDto): Promise<Product> {

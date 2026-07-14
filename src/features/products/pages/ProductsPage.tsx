@@ -98,7 +98,7 @@ export function ProductsPage() {
     <>
       <PageHeader
         title="Produtos"
-        description="Gerencie o catálogo da sua loja."
+        description="Gerencie o catálogo da sua loja. Abra a ficha para ver compradores e histórico."
         actions={
           <Button onClick={handleOpenCreate}>
             <Plus className="h-4 w-4" /> Novo Produto

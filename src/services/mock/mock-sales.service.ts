@@ -22,6 +22,9 @@ class MockSalesService implements ISalesService {
       dto.items.map(async (item) => {
         const product = await mockProductsService.findById(item.productId);
         if (!product) throw new Error(`Product ${item.productId} not found`);
+        if (item.quantity > product.quantity) {
+          throw new Error(`Estoque insuficiente de ${product.name}`);
+        }
 
         return {
           productId: product.id,
@@ -31,6 +34,14 @@ class MockSalesService implements ISalesService {
         };
       }),
     );
+
+    for (const item of items) {
+      const product = await mockProductsService.findById(item.productId);
+      if (!product) continue;
+      await mockProductsService.update(item.productId, {
+        quantity: product.quantity - item.quantity,
+      });
+    }
 
     const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const total = Math.max(0, subtotal - dto.discount);

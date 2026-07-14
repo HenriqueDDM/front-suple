@@ -16,14 +16,40 @@ class MockStockService implements IStockService {
     const product = await mockProductsService.findById(dto.productId);
     if (!product) throw new Error(`Product ${dto.productId} not found`);
 
-    const quantity = dto.type === "exit" ? -Math.abs(dto.quantity) : Math.abs(dto.quantity);
+    let signedQuantity: number;
+    let newQuantity: number;
+
+    switch (dto.type) {
+      case "entry":
+        if (dto.quantity < 1) throw new Error("Quantidade inválida");
+        signedQuantity = Math.abs(dto.quantity);
+        newQuantity = product.quantity + signedQuantity;
+        break;
+      case "exit":
+        if (dto.quantity < 1) throw new Error("Quantidade inválida");
+        signedQuantity = -Math.abs(dto.quantity);
+        newQuantity = product.quantity + signedQuantity;
+        break;
+      case "adjustment":
+        newQuantity = Math.abs(dto.quantity);
+        signedQuantity = newQuantity - product.quantity;
+        break;
+      default:
+        throw new Error("Tipo de movimentação inválido");
+    }
+
+    if (newQuantity < 0) {
+      throw new Error("Estoque insuficiente");
+    }
+
+    await mockProductsService.update(product.id, { quantity: newQuantity });
 
     const movement: StockMovement = {
       id: crypto.randomUUID(),
       productId: product.id,
       productName: product.name,
       type: dto.type,
-      quantity,
+      quantity: signedQuantity,
       reason: dto.reason ?? movementTypeLabel[dto.type],
       createdAt: new Date().toISOString(),
     };
