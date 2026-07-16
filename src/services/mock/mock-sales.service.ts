@@ -30,7 +30,8 @@ class MockSalesService implements ISalesService {
           productId: product.id,
           productName: product.name,
           quantity: item.quantity,
-          unitPrice: product.salePrice,
+          unitPrice: item.isGift ? 0 : product.salePrice,
+          isGift: item.isGift ?? false,
         };
       }),
     );
@@ -62,6 +63,7 @@ class MockSalesService implements ISalesService {
       total,
       paymentMethod: dto.paymentMethod,
       createdAt: new Date().toISOString(),
+      notes: dto.notes ?? "",
     };
 
     this.store = [sale, ...this.store];

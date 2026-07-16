@@ -6,28 +6,31 @@ import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { EntityListCard } from "@/shared/components/EntityListCard";
 import { DataTable } from "@/shared/components/DataTable";
 import { ProductTableRow } from "@/features/products/components/ProductTableRow";
+import { ProductFormFields } from "@/features/products/components/ProductFormFields";
 import { FormDialog } from "@/shared/components/forms/FormDialog";
-import { FormField } from "@/shared/components/forms/FormField";
-import { FormGrid } from "@/shared/components/forms/FormGrid";
 import { useProducts, useProductCatalog } from "@/features/products/hooks/useProducts";
+import { useSuppliers } from "@/features/suppliers/hooks/useSuppliers";
 import { useSearchFilter } from "@/shared/hooks/useSearchFilter";
 import { useFormState } from "@/shared/hooks/useFormState";
-import { parseNumericInput } from "@/shared/utils/number";
+import type { CreateProductDto } from "@/types/api";
 import type { Product } from "@/types";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { toast } from "sonner";
 
-const EMPTY_PRODUCT: Omit<Product, "id"> = {
+const EMPTY_PRODUCT: CreateProductDto = {
   name: "",
   brand: "",
   category: "",
   supplier: "",
+  supplierId: null,
+  sku: "",
+  ncm: "",
   barcode: "",
   purchasePrice: 0,
   salePrice: 0,
+  pricingMode: "manual",
+  pricingValue: 0,
   quantity: 0,
   minStock: 0,
   imageUrl: "",
@@ -35,7 +38,8 @@ const EMPTY_PRODUCT: Omit<Product, "id"> = {
 
 export function ProductsPage() {
   const { items, createProduct, updateProduct, deleteProduct } = useProducts();
-  const { categories, suppliers } = useProductCatalog();
+  const { categories } = useProductCatalog();
+  const { items: suppliers } = useSuppliers();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -43,7 +47,16 @@ export function ProductsPage() {
   const { form, setField, reset } = useFormState(EMPTY_PRODUCT);
 
   const getProductSearchText = useCallback(
-    (product: Product) => [product.name, product.brand, product.category].join(" "),
+    (product: Product) =>
+      [
+        product.name,
+        product.brand,
+        product.category,
+        product.barcode,
+        product.sku,
+        product.ncm,
+        product.supplier,
+      ].join(" "),
     [],
   );
 
@@ -72,6 +85,10 @@ export function ProductsPage() {
   const handleSave = useCallback(() => {
     if (!form.name.trim()) {
       toast.error("Informe o nome do produto.");
+      return;
+    }
+    if (!form.barcode.trim()) {
+      toast.error("Informe o código de barras.");
       return;
     }
 
@@ -109,7 +126,7 @@ export function ProductsPage() {
       <EntityListCard
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Buscar por nome, marca ou categoria..."
+        searchPlaceholder="Buscar por nome, SKU, NCM ou código de barras..."
         isEmpty={filteredProducts.length === 0}
         emptyState={
           <EmptyState
@@ -154,83 +171,12 @@ export function ProductsPage() {
         onSubmit={handleSave}
         className="sm:max-w-2xl"
       >
-        <FormGrid>
-          <FormField label="Nome" className="sm:col-span-2">
-            <Input value={form.name} onChange={(event) => setField("name", event.target.value)} />
-          </FormField>
-          <FormField label="Marca">
-            <Input value={form.brand} onChange={(event) => setField("brand", event.target.value)} />
-          </FormField>
-          <FormField label="Categoria">
-            <Select value={form.category} onValueChange={(value) => setField("category", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
-          <FormField label="Fornecedor">
-            <Select value={form.supplier} onValueChange={(value) => setField("supplier", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((supplier) => (
-                  <SelectItem key={supplier} value={supplier}>
-                    {supplier}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
-          <FormField label="Código de barras">
-            <Input
-              value={form.barcode}
-              onChange={(event) => setField("barcode", event.target.value)}
-            />
-          </FormField>
-          <FormField label="Preço de compra">
-            <Input
-              type="number"
-              value={form.purchasePrice}
-              onChange={(event) => setField("purchasePrice", parseNumericInput(event.target.value))}
-            />
-          </FormField>
-          <FormField label="Preço de venda">
-            <Input
-              type="number"
-              value={form.salePrice}
-              onChange={(event) => setField("salePrice", parseNumericInput(event.target.value))}
-            />
-          </FormField>
-          <FormField label="Quantidade">
-            <Input
-              type="number"
-              value={form.quantity}
-              onChange={(event) => setField("quantity", parseNumericInput(event.target.value))}
-            />
-          </FormField>
-          <FormField label="Estoque mínimo">
-            <Input
-              type="number"
-              value={form.minStock}
-              onChange={(event) => setField("minStock", parseNumericInput(event.target.value))}
-            />
-          </FormField>
-          <FormField label="Imagem (URL)" className="sm:col-span-2">
-            <Input
-              value={form.imageUrl}
-              onChange={(event) => setField("imageUrl", event.target.value)}
-              placeholder="https://..."
-            />
-          </FormField>
-        </FormGrid>
+        <ProductFormFields
+          form={form}
+          setField={setField}
+          categories={categories}
+          suppliers={suppliers}
+        />
       </FormDialog>
 
       <ConfirmDialog

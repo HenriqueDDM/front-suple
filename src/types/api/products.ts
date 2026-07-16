@@ -1,4 +1,4 @@
-import type { Product } from "@/types";
+import type { PricingMode, Product } from "@/types";
 
 export type CreateProductDto = Omit<Product, "id">;
 export type UpdateProductDto = Partial<CreateProductDto>;
@@ -30,6 +30,26 @@ export interface ProductSaleEntry {
   createdAt: string;
 }
 
+export interface ProductPriceHistoryEntry {
+  id: string;
+  productId: string;
+  oldPurchasePrice: number;
+  newPurchasePrice: number;
+  oldSalePrice: number;
+  newSalePrice: number;
+  changedByUserId: string | null;
+  note: string;
+  createdAt: string;
+}
+
+export interface UpdateProductPriceDto {
+  purchasePrice?: number;
+  salePrice?: number;
+  pricingMode?: PricingMode;
+  pricingValue?: number;
+  note?: string;
+}
+
 export interface ProductProfileStats {
   unitsSold: number;
   saleCount: number;
@@ -42,4 +62,5 @@ export interface ProductProfile {
   stats: ProductProfileStats;
   buyers: ProductBuyer[];
   recentSales: ProductSaleEntry[];
+  priceHistory: ProductPriceHistoryEntry[];
 }

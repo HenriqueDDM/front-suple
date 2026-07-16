@@ -26,6 +26,23 @@ export class ApiClient {
     return this.handleResponse<T>(response);
   }
 
+  async getText(path: string, options?: RequestOptions): Promise<string> {
+    const url = this.buildUrl(path, options?.params);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.buildHeaders({ ...options?.headers, Accept: "application/xml,text/xml" }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => undefined);
+      const message =
+        typeof body === "object" && body !== null && "message" in body
+          ? String((body as { message: unknown }).message)
+          : response.statusText;
+      throw new ApiError(message, response.status, body);
+    }
+    return response.text();
+  }
+
   async post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
     const url = this.buildUrl(path, options?.params);
     const response = await fetch(url, {

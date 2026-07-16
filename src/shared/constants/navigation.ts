@@ -6,6 +6,7 @@ import {
   Boxes,
   BarChart3,
   Settings,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, exact: true },
   { title: "Produtos", url: "/products", icon: Package },
+  { title: "Fornecedores", url: "/suppliers", icon: Truck },
   { title: "Clientes", url: "/customers", icon: Users },
   { title: "Vendas", url: "/sales", icon: ShoppingCart },
   { title: "Estoque", url: "/stock", icon: Boxes },

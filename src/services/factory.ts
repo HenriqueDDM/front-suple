@@ -4,27 +4,33 @@ import { getAccessToken } from "@/services/api/auth-store";
 import { ensureApiReady } from "@/services/api/bootstrap";
 import {
   HttpCustomersService,
+  HttpPurchasesService,
   HttpProductsService,
   HttpReportsService,
   HttpSalesService,
   HttpSettingsService,
   HttpStockService,
+  HttpSuppliersService,
 } from "@/services/http";
 import type {
   ICustomersService,
+  IPurchasesService,
   IProductsService,
   IReportsService,
   ISalesService,
   ISettingsService,
   IStockService,
+  ISuppliersService,
 } from "@/services/interfaces";
 import {
   mockCustomersService,
+  mockPurchasesService,
   mockProductsService,
   mockReportsService,
   mockSalesService,
   mockSettingsService,
   mockStockService,
+  mockSuppliersService,
 } from "@/services/mock";
 
 export { ensureApiReady } from "@/services/api/bootstrap";
@@ -41,8 +47,16 @@ function getApiClient(): ApiClient {
   return apiClient;
 }
 
+export function getPurchasesService(): IPurchasesService {
+  return env.useMockApi ? mockPurchasesService : new HttpPurchasesService(getApiClient());
+}
+
 export function getProductsService(): IProductsService {
   return env.useMockApi ? mockProductsService : new HttpProductsService(getApiClient());
+}
+
+export function getSuppliersService(): ISuppliersService {
+  return env.useMockApi ? mockSuppliersService : new HttpSuppliersService(getApiClient());
 }
 
 export function getCustomersService(): ICustomersService {

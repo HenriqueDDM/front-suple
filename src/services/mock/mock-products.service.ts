@@ -1,15 +1,31 @@
-import { products as seedProducts, categories, suppliers } from "@/services/mock/data/products";
+import { products as seedProducts, categories, suppliers as supplierNames } from "@/services/mock/data/products";
+import { suppliers as seedSuppliers } from "@/services/mock/data/suppliers";
 import type { IProductsService } from "@/services/interfaces";
-import type { Product, Sale } from "@/types";
+import type { PricingMode, Product, Sale } from "@/types";
 import type {
   CreateProductDto,
   ProductCatalog,
+  ProductPriceHistoryEntry,
   ProductProfile,
   UpdateProductDto,
+  UpdateProductPriceDto,
 } from "@/types/api";
+import { calculateSaleFromCost } from "@/shared/utils/pricing";
+
+function withDefaults(product: Product): Product {
+  return {
+    ...product,
+    supplierId: product.supplierId ?? null,
+    sku: product.sku ?? "",
+    ncm: product.ncm ?? "",
+    pricingMode: product.pricingMode ?? "manual",
+    pricingValue: product.pricingValue ?? 0,
+  };
+}
 
 class MockProductsService implements IProductsService {
-  private store: Product[] = [...seedProducts];
+  private store: Product[] = seedProducts.map(withDefaults);
+  private priceHistory: ProductPriceHistoryEntry[] = [];
 
   async findAll(): Promise<Product[]> {
     return [...this.store];
@@ -105,11 +121,21 @@ class MockProductsService implements IProductsService {
       },
       buyers,
       recentSales,
+      priceHistory: this.priceHistory
+        .filter((entry) => entry.productId === id)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     };
   }
 
   async create(dto: CreateProductDto): Promise<Product> {
-    const product: Product = { ...dto, id: crypto.randomUUID() };
+    const salePrice =
+      calculateSaleFromCost(dto.purchasePrice, dto.pricingMode, dto.pricingValue) ??
+      dto.salePrice;
+    const product: Product = {
+      ...dto,
+      salePrice,
+      id: crypto.randomUUID(),
+    };
     this.store = [product, ...this.store];
     return product;
   }
@@ -118,8 +144,46 @@ class MockProductsService implements IProductsService {
     const index = this.store.findIndex((product) => product.id === id);
     if (index === -1) throw new Error(`Product ${id} not found`);
 
-    const updated = { ...this.store[index], ...dto };
-    this.store = this.store.map((product) => (product.id === id ? updated : product));
+    const current = this.store[index];
+    const next = { ...current, ...dto };
+    const mode = (dto.pricingMode ?? current.pricingMode) as PricingMode;
+    const pricingValue = dto.pricingValue ?? current.pricingValue;
+    const purchasePrice = dto.purchasePrice ?? current.purchasePrice;
+    const auto = calculateSaleFromCost(purchasePrice, mode, pricingValue);
+    next.purchasePrice = purchasePrice;
+    next.pricingMode = mode;
+    next.pricingValue = pricingValue;
+    next.salePrice = auto ?? (dto.salePrice ?? current.salePrice);
+
+    if (
+      current.purchasePrice !== next.purchasePrice ||
+      current.salePrice !== next.salePrice
+    ) {
+      this.priceHistory = [
+        {
+          id: crypto.randomUUID(),
+          productId: id,
+          oldPurchasePrice: current.purchasePrice,
+          newPurchasePrice: next.purchasePrice,
+          oldSalePrice: current.salePrice,
+          newSalePrice: next.salePrice,
+          changedByUserId: null,
+          note: "",
+          createdAt: new Date().toISOString(),
+        },
+        ...this.priceHistory,
+      ];
+    }
+
+    this.store = this.store.map((product) => (product.id === id ? next : product));
+    return next;
+  }
+
+  async updatePrice(id: string, dto: UpdateProductPriceDto): Promise<Product> {
+    const updated = await this.update(id, dto);
+    if (dto.note?.trim() && this.priceHistory[0]?.productId === id) {
+      this.priceHistory[0] = { ...this.priceHistory[0], note: dto.note.trim() };
+    }
     return updated;
   }
 
@@ -128,7 +192,11 @@ class MockProductsService implements IProductsService {
   }
 
   async getCatalog(): Promise<ProductCatalog> {
-    return { categories: [...categories], suppliers: [...suppliers] };
+    const names =
+      seedSuppliers.length > 0
+        ? seedSuppliers.map((s) => s.name)
+        : [...supplierNames];
+    return { categories: [...categories], suppliers: names };
   }
 }
 

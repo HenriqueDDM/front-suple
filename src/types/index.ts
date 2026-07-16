@@ -4,18 +4,35 @@ export type * from "./api";
 
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
+export type PricingMode = "manual" | "markup" | "margin";
+
 export interface Product {
   id: string;
   name: string;
   brand: string;
   category: string;
   supplier: string;
+  supplierId: string | null;
+  sku: string;
+  ncm: string;
   barcode: string;
   purchasePrice: number;
   salePrice: number;
+  pricingMode: PricingMode;
+  pricingValue: number;
   quantity: number;
   minStock: number;
   imageUrl: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  cnpj: string;
+  notes: string;
 }
 
 export interface Customer {
@@ -37,6 +54,7 @@ export interface SaleItem {
   productName: string;
   quantity: number;
   unitPrice: number;
+  isGift?: boolean;
 }
 
 export interface Sale {
@@ -49,6 +67,7 @@ export interface Sale {
   total: number;
   paymentMethod: PaymentMethod;
   createdAt: string;
+  notes?: string;
 }
 
 export type MovementType = "entry" | "exit" | "adjustment";

@@ -4,8 +4,15 @@ export const API_ENDPOINTS = {
     byId: (id: string) => `/products/${id}`,
     sales: (id: string) => `/products/${id}/sales`,
     profile: (id: string) => `/products/${id}/profile`,
+    priceHistory: (id: string) => `/products/${id}/price-history`,
+    price: (id: string) => `/products/${id}/price`,
     categories: "/products/categories",
     suppliers: "/products/suppliers",
+  },
+  suppliers: {
+    list: "/suppliers",
+    byId: (id: string) => `/suppliers/${id}`,
+    profile: (id: string) => `/suppliers/${id}/profile`,
   },
   customers: {
     list: "/customers",
@@ -20,6 +27,13 @@ export const API_ENDPOINTS = {
   stock: {
     movements: "/stock/movements",
     levels: "/stock/levels",
+  },
+  purchases: {
+    list: "/purchases",
+    byId: (id: string) => `/purchases/${id}`,
+    preview: "/purchases/import/preview",
+    confirm: "/purchases/import/confirm",
+    xml: (id: string) => `/purchases/${id}/xml`,
   },
   reports: {
     salesTrend: "/reports/sales-trend",

@@ -1,24 +1,37 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ChevronDown,
+  History,
   MessageCircle,
   Package,
+  Pencil,
   ReceiptText,
   RefreshCw,
   ShoppingBag,
   Users,
   Wallet,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useProductProfile } from "@/features/products/hooks/useProductProfile";
+import { ProductFormFields } from "@/features/products/components/ProductFormFields";
+import { useProductCatalog } from "@/features/products/hooks/useProducts";
+import { useSuppliers } from "@/features/suppliers/hooks/useSuppliers";
 import { ProductThumbnailInline } from "@/shared/components/ProductThumbnail";
 import { StockBadge } from "@/shared/components/StockBadge";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { StatsCard } from "@/shared/components/StatsCard";
+import { FormDialog } from "@/shared/components/forms/FormDialog";
+import { FormField } from "@/shared/components/forms/FormField";
+import { FormGrid } from "@/shared/components/forms/FormGrid";
+import { useFormState } from "@/shared/hooks/useFormState";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Textarea } from "@/shared/ui/textarea";
 import {
   formatCurrency,
   formatDate,
@@ -26,8 +39,18 @@ import {
   formatNumber,
   paymentMethodLabel,
 } from "@/shared/utils/format";
+import { parseNumericInput } from "@/shared/utils/number";
+import {
+  calculateSaleFromCost,
+  pricingModeLabel,
+} from "@/shared/utils/pricing";
+import { getProductsService, queryKeys } from "@/services";
+import type { CreateProductDto, UpdateProductPriceDto } from "@/types/api";
+import type { PricingMode } from "@/types";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
+const productsService = getProductsService();
 
 function whatsappUrl(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
@@ -43,9 +66,48 @@ function timesLabel(n: number): string {
 export function ProductProfilePage() {
   const { productId } = useParams({ from: "/_app/products_/$productId" });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: profile, isLoading, error } = useProductProfile(productId);
+  const { categories } = useProductCatalog();
+  const { items: suppliers } = useSuppliers();
   const [buyersVisible, setBuyersVisible] = useState(PAGE_SIZE);
   const [salesVisible, setSalesVisible] = useState(PAGE_SIZE);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isPriceOpen, setIsPriceOpen] = useState(false);
+  const { form, setField, reset } = useFormState<CreateProductDto>({
+    name: "",
+    brand: "",
+    category: "",
+    supplier: "",
+    supplierId: null,
+    sku: "",
+    ncm: "",
+    barcode: "",
+    purchasePrice: 0,
+    salePrice: 0,
+    pricingMode: "manual",
+    pricingValue: 0,
+    quantity: 0,
+    minStock: 0,
+    imageUrl: "",
+  });
+  const {
+    form: priceForm,
+    setField: setPriceField,
+    reset: resetPrice,
+  } = useFormState<{
+    purchasePrice: number;
+    salePrice: number;
+    pricingMode: PricingMode;
+    pricingValue: number;
+    note: string;
+  }>({
+    purchasePrice: 0,
+    salePrice: 0,
+    pricingMode: "manual",
+    pricingValue: 0,
+    note: "",
+  });
 
   const margin = useMemo(() => {
     if (!profile) return null;
@@ -63,6 +125,89 @@ export function ProductProfilePage() {
     () => profile?.recentSales.slice(0, salesVisible) ?? [],
     [profile?.recentSales, salesVisible],
   );
+
+  const invalidateProduct = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.products.all }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.products.profile(productId),
+      }),
+    ]);
+  }, [productId, queryClient]);
+
+  const handleOpenEdit = useCallback(() => {
+    if (!profile) return;
+    const { id: _id, ...rest } = profile.product;
+    reset(rest);
+    setIsEditOpen(true);
+  }, [profile, reset]);
+
+  const handleOpenPrice = useCallback(() => {
+    if (!profile) return;
+    resetPrice({
+      purchasePrice: profile.product.purchasePrice,
+      salePrice: profile.product.salePrice,
+      pricingMode: profile.product.pricingMode,
+      pricingValue: profile.product.pricingValue,
+      note: "",
+    });
+    setIsPriceOpen(true);
+  }, [profile, resetPrice]);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!form.name.trim() || !form.barcode.trim()) {
+      toast.error("Nome e código de barras são obrigatórios.");
+      return;
+    }
+    await productsService.update(productId, form);
+    await invalidateProduct();
+    toast.success("Produto atualizado.");
+    setIsEditOpen(false);
+  }, [form, invalidateProduct, productId]);
+
+  const handleSavePrice = useCallback(async () => {
+    const dto: UpdateProductPriceDto = {
+      purchasePrice: priceForm.purchasePrice,
+      salePrice: priceForm.salePrice,
+      pricingMode: priceForm.pricingMode,
+      pricingValue: priceForm.pricingValue,
+      note: priceForm.note,
+    };
+    await productsService.updatePrice(productId, dto);
+    await invalidateProduct();
+    toast.success("Preço atualizado.");
+    setIsPriceOpen(false);
+  }, [invalidateProduct, priceForm, productId]);
+
+  const handlePricePurchaseChange = (value: number) => {
+    setPriceField("purchasePrice", value);
+    const next = calculateSaleFromCost(
+      value,
+      priceForm.pricingMode,
+      priceForm.pricingValue,
+    );
+    if (next != null) setPriceField("salePrice", next);
+  };
+
+  const handlePriceModeChange = (mode: PricingMode) => {
+    setPriceField("pricingMode", mode);
+    const next = calculateSaleFromCost(
+      priceForm.purchasePrice,
+      mode,
+      priceForm.pricingValue,
+    );
+    if (next != null) setPriceField("salePrice", next);
+  };
+
+  const handlePriceValueChange = (value: number) => {
+    setPriceField("pricingValue", value);
+    const next = calculateSaleFromCost(
+      priceForm.purchasePrice,
+      priceForm.pricingMode,
+      value,
+    );
+    if (next != null) setPriceField("salePrice", next);
+  };
 
   if (isLoading) {
     return (
@@ -97,12 +242,20 @@ export function ProductProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/products">
             <ArrowLeft className="h-4 w-4" /> Produtos
           </Link>
         </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={handleOpenPrice}>
+            <History className="h-4 w-4" /> Alterar preço
+          </Button>
+          <Button size="sm" onClick={handleOpenEdit}>
+            <Pencil className="h-4 w-4" /> Editar produto
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -119,10 +272,22 @@ export function ProductProfilePage() {
                 <span>{product.brand}</span>
                 <span>·</span>
                 <span>{product.category}</span>
+                {product.sku ? (
+                  <>
+                    <span>·</span>
+                    <span>SKU {product.sku}</span>
+                  </>
+                ) : null}
                 {product.barcode ? (
                   <>
                     <span>·</span>
                     <span>EAN {product.barcode}</span>
+                  </>
+                ) : null}
+                {product.ncm ? (
+                  <>
+                    <span>·</span>
+                    <span>NCM {product.ncm}</span>
                   </>
                 ) : null}
               </div>
@@ -131,6 +296,9 @@ export function ProductProfilePage() {
                 <span className="text-sm text-muted-foreground">
                   {formatNumber(product.quantity)} un. · mín. {product.minStock}
                 </span>
+                {product.supplier ? (
+                  <Badge variant="secondary">{product.supplier}</Badge>
+                ) : null}
               </div>
             </div>
           </div>
@@ -141,6 +309,9 @@ export function ProductProfilePage() {
             <p className="text-xs text-muted-foreground">
               Custo {formatCurrency(product.purchasePrice)}
               {margin != null ? ` · margem ${margin}%` : ""}
+              {product.pricingMode !== "manual"
+                ? ` · ${pricingModeLabel(product.pricingMode)} ${product.pricingValue}%`
+                : ""}
             </p>
           </div>
         </CardContent>
@@ -304,6 +475,142 @@ export function ProductProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de preços</CardTitle>
+          <CardDescription>Mudanças de custo e venda registradas</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {profile.priceHistory.length === 0 ? (
+            <EmptyState
+              icon={History}
+              title="Sem alterações de preço"
+              description="Quando o preço mudar, o histórico aparece aqui."
+            />
+          ) : (
+            profile.priceHistory.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-medium">{formatDateTime(entry.createdAt)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Custo {formatCurrency(entry.oldPurchasePrice)} →{" "}
+                    {formatCurrency(entry.newPurchasePrice)}
+                  </p>
+                  {entry.note ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{entry.note}</p>
+                  ) : null}
+                </div>
+                <div className="text-right text-sm">
+                  <p className="font-semibold">
+                    {formatCurrency(entry.oldSalePrice)} →{" "}
+                    {formatCurrency(entry.newSalePrice)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <FormDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        title="Editar produto"
+        onSubmit={handleSaveEdit}
+        className="sm:max-w-2xl"
+      >
+        <ProductFormFields
+          form={form}
+          setField={setField}
+          categories={categories}
+          suppliers={suppliers}
+        />
+      </FormDialog>
+
+      <FormDialog
+        open={isPriceOpen}
+        onOpenChange={setIsPriceOpen}
+        title="Alterar preço"
+        onSubmit={handleSavePrice}
+        className="sm:max-w-lg"
+      >
+        <FormGrid>
+          <FormField label="Preço de custo">
+            <Input
+              type="number"
+              value={priceForm.purchasePrice}
+              onChange={(event) =>
+                handlePricePurchaseChange(parseNumericInput(event.target.value))
+              }
+            />
+          </FormField>
+          <FormField label="Tipo de precificação">
+            <Select
+              value={priceForm.pricingMode}
+              onValueChange={(value) => handlePriceModeChange(value as PricingMode)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(["manual", "markup", "margin"] as PricingMode[]).map((mode) => (
+                  <SelectItem key={mode} value={mode}>
+                    {pricingModeLabel(mode)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+          {priceForm.pricingMode !== "manual" ? (
+            <FormField
+              label={
+                priceForm.pricingMode === "markup" ? "Markup (%)" : "Margem (%)"
+              }
+            >
+              <Input
+                type="number"
+                value={priceForm.pricingValue}
+                onChange={(event) =>
+                  handlePriceValueChange(parseNumericInput(event.target.value))
+                }
+              />
+            </FormField>
+          ) : null}
+          <FormField label="Preço de venda">
+            <Input
+              type="number"
+              value={priceForm.salePrice}
+              disabled={priceForm.pricingMode !== "manual"}
+              onChange={(event) =>
+                setPriceField("salePrice", parseNumericInput(event.target.value))
+              }
+            />
+          </FormField>
+          <FormField label="Observação" className="sm:col-span-2">
+            <Textarea
+              value={priceForm.note}
+              onChange={(event) => setPriceField("note", event.target.value)}
+              placeholder="Ex.: reajuste do fornecedor"
+            />
+          </FormField>
+        </FormGrid>
+        {profile.priceHistory.length > 0 ? (
+          <div className="mt-4 space-y-2 border-t border-border pt-4">
+            <p className="text-sm font-medium">Últimas mudanças</p>
+            {profile.priceHistory.slice(0, 5).map((entry) => (
+              <p key={entry.id} className="text-xs text-muted-foreground">
+                {formatDateTime(entry.createdAt)} · venda{" "}
+                {formatCurrency(entry.oldSalePrice)} →{" "}
+                {formatCurrency(entry.newSalePrice)}
+              </p>
+            ))}
+          </div>
+        ) : null}
+      </FormDialog>
     </div>
   );
 }

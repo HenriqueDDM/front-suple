@@ -6,6 +6,11 @@ export const queryKeys = {
     sales: (id: string) => ["products", id, "sales"] as const,
     profile: (id: string) => ["products", id, "profile"] as const,
   },
+  suppliers: {
+    all: ["suppliers"] as const,
+    detail: (id: string) => ["suppliers", id] as const,
+    profile: (id: string) => ["suppliers", id, "profile"] as const,
+  },
   customers: {
     all: ["customers"] as const,
     detail: (id: string) => ["customers", id] as const,
@@ -18,6 +23,10 @@ export const queryKeys = {
   },
   stock: {
     movements: ["stock", "movements"] as const,
+  },
+  purchases: {
+    all: ["purchases"] as const,
+    detail: (id: string) => ["purchases", id] as const,
   },
   reports: {
     sales: ["reports", "sales"] as const,

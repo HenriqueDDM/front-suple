@@ -7,6 +7,7 @@ import type {
   ProductCatalog,
   ProductProfile,
   UpdateProductDto,
+  UpdateProductPriceDto,
 } from "@/types/api";
 
 export class HttpProductsService implements IProductsService {
@@ -38,6 +39,10 @@ export class HttpProductsService implements IProductsService {
 
   update(id: string, dto: UpdateProductDto): Promise<Product> {
     return this.client.patch<Product>(API_ENDPOINTS.products.byId(id), dto);
+  }
+
+  updatePrice(id: string, dto: UpdateProductPriceDto): Promise<Product> {
+    return this.client.patch<Product>(API_ENDPOINTS.products.price(id), dto);
   }
 
   delete(id: string): Promise<void> {

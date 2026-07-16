@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -6,19 +6,27 @@ import {
   ChevronDown,
   MessageCircle,
   Package,
+  Pencil,
   Phone,
   Repeat,
   ShoppingBag,
   TrendingUp,
   Wallet,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCustomerProfile } from "@/features/customers/hooks/useCustomerProfile";
 import { UserAvatar } from "@/shared/components/UserAvatar";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { StatsCard } from "@/shared/components/StatsCard";
+import { FormDialog } from "@/shared/components/forms/FormDialog";
+import { FormField } from "@/shared/components/forms/FormField";
+import { FormGrid } from "@/shared/components/forms/FormGrid";
+import { useFormState } from "@/shared/hooks/useFormState";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
 import {
   formatCurrency,
   formatDate,
@@ -26,9 +34,13 @@ import {
   formatNumber,
   paymentMethodLabel,
 } from "@/shared/utils/format";
+import { getCustomersService, queryKeys } from "@/services";
+import type { CreateCustomerDto } from "@/types/api";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
+const customersService = getCustomersService();
 
 function whatsappUrl(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
@@ -58,9 +70,47 @@ function timesLabel(n: number): string {
 export function CustomerProfilePage() {
   const { customerId } = useParams({ from: "/_app/customers_/$customerId" });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: profile, isLoading, error } = useCustomerProfile(customerId);
   const [historyVisible, setHistoryVisible] = useState(PAGE_SIZE);
   const [patternsVisible, setPatternsVisible] = useState(PAGE_SIZE);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const { form, setField, reset } = useFormState<CreateCustomerDto>({
+    name: "",
+    phone: "",
+    email: "",
+    cpf: "",
+    birthDate: "",
+    notes: "",
+  });
+
+  const invalidateCustomer = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.customers.profile(customerId),
+      }),
+    ]);
+  }, [customerId, queryClient]);
+
+  const handleOpenEdit = useCallback(() => {
+    if (!profile) return;
+    const { id: _id, lastPurchase: _lastPurchase, totalSpent: _totalSpent, ...rest } =
+      profile.customer;
+    reset(rest);
+    setIsEditOpen(true);
+  }, [profile, reset]);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!form.name.trim()) {
+      toast.error("Informe o nome do cliente.");
+      return;
+    }
+    await customersService.update(customerId, form);
+    await invalidateCustomer();
+    toast.success("Cliente atualizado.");
+    setIsEditOpen(false);
+  }, [customerId, form, invalidateCustomer]);
 
   const visiblePurchases = useMemo(
     () => profile?.purchases.slice(0, historyVisible) ?? [],
@@ -106,11 +156,14 @@ export function CustomerProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/customers">
             <ArrowLeft className="h-4 w-4" /> Clientes
           </Link>
+        </Button>
+        <Button size="sm" onClick={handleOpenEdit}>
+          <Pencil className="h-4 w-4" /> Editar cliente
         </Button>
       </div>
 
@@ -209,14 +262,23 @@ export function CustomerProfilePage() {
                           {formatDateTime(sale.createdAt)} ·{" "}
                           {paymentMethodLabel[sale.paymentMethod]}
                         </p>
+                        {sale.notes ? (
+                          <p className="mt-1 text-xs text-muted-foreground">{sale.notes}</p>
+                        ) : null}
                       </div>
                       <p className="font-semibold">{formatCurrency(sale.total)}</p>
                     </div>
                     <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                       {sale.items.map((item) => (
-                        <li key={`${sale.id}-${item.productId}`}>
-                          {item.quantity}x {item.productName} ·{" "}
-                          {formatCurrency(item.quantity * item.unitPrice)}
+                        <li key={`${sale.id}-${item.productId}-${item.isGift ? "gift" : "paid"}`}>
+                          {item.quantity}x {item.productName}
+                          {item.isGift ? (
+                            <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">
+                              Brinde
+                            </Badge>
+                          ) : (
+                            <> · {formatCurrency(item.quantity * item.unitPrice)}</>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -299,6 +361,47 @@ export function CustomerProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <FormDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        title="Editar cliente"
+        onSubmit={handleSaveEdit}
+        className="sm:max-w-lg"
+      >
+        <FormGrid>
+          <FormField label="Nome" className="sm:col-span-2">
+            <Input value={form.name} onChange={(event) => setField("name", event.target.value)} />
+          </FormField>
+          <FormField label="Telefone">
+            <Input value={form.phone} onChange={(event) => setField("phone", event.target.value)} />
+          </FormField>
+          <FormField label="Email">
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(event) => setField("email", event.target.value)}
+            />
+          </FormField>
+          <FormField label="CPF">
+            <Input value={form.cpf} onChange={(event) => setField("cpf", event.target.value)} />
+          </FormField>
+          <FormField label="Nascimento">
+            <Input
+              type="date"
+              value={form.birthDate}
+              onChange={(event) => setField("birthDate", event.target.value)}
+            />
+          </FormField>
+          <FormField label="Observações" className="sm:col-span-2">
+            <Textarea
+              value={form.notes}
+              onChange={(event) => setField("notes", event.target.value)}
+              rows={3}
+            />
+          </FormField>
+        </FormGrid>
+      </FormDialog>
     </div>
   );
 }

@@ -26,8 +26,11 @@ export function useProducts() {
   const updateMutation = useMutation({
     mutationFn: ({ id, dto }: { id: string; dto: UpdateProductDto }) =>
       productsService.update(id, dto),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.products.profile(variables.id),
+      });
     },
   });
 

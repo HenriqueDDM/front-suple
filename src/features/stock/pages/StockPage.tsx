@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { AlertTriangle, Boxes, Package, Plus, Warehouse } from "lucide-react";
+import { AlertTriangle, Boxes, FileUp, Package, Plus, Warehouse } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { StatsCard } from "@/shared/components/StatsCard";
 import { StockBadge } from "@/shared/components/StockBadge";
@@ -8,6 +8,7 @@ import { ProductThumbnailInline } from "@/shared/components/ProductThumbnail";
 import { MovementTypeSelect } from "@/shared/components/MovementTypeSelect";
 import { SearchInput } from "@/shared/components/SearchInput";
 import { StockMovementItem } from "@/features/stock/components/StockMovementItem";
+import { ImportInvoiceDialog } from "@/features/stock/components/ImportInvoiceDialog";
 import { FormDialog } from "@/shared/components/forms/FormDialog";
 import { FormField } from "@/shared/components/forms/FormField";
 import { useProducts } from "@/features/products/hooks/useProducts";
@@ -32,6 +33,7 @@ export function StockPage() {
   const { items: products } = useProducts();
   const { items: movements, createMovement, isCreating } = useStockMovements();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [productId, setProductId] = useState("");
   const [movementType, setMovementType] = useState<MovementType>("entry");
   const [quantity, setQuantity] = useState(0);
@@ -149,9 +151,14 @@ export function StockPage() {
         title="Estoque"
         description="Controle de níveis e movimentações."
         actions={
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4" /> Nova movimentação
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <FileUp className="h-4 w-4" /> Importar XML
+            </Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4" /> Nova movimentação
+            </Button>
+          </div>
         }
       />
 
@@ -323,6 +330,8 @@ export function StockPage() {
           </FormField>
         </div>
       </FormDialog>
+
+      <ImportInvoiceDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
     </>
   );
 }
