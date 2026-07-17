@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/shared/constants/navigation";
 import { useSettings } from "@/features/settings/hooks/useSettings";
 
+const PLAN_LABEL = {
+  free: "Plano Free",
+  basic: "Plano Basic",
+  pro: "Plano Pro",
+  enterprise: "Plano Enterprise",
+} as const;
+
 export const Sidebar = memo(function Sidebar({
   mobileOpen,
   onClose,
@@ -32,7 +39,7 @@ export const Sidebar = memo(function Sidebar({
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar/95 shadow-xl shadow-foreground/5 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
         aria-label="Menu principal"
@@ -40,11 +47,7 @@ export const Sidebar = memo(function Sidebar({
         <div className="flex h-16 items-center justify-between gap-2 px-5">
           <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={onClose}>
             {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt=""
-                className="h-9 w-9 shrink-0 rounded-xl object-cover"
-              />
+              <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
             ) : (
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
                 <Dumbbell className="h-5 w-5" />
@@ -74,10 +77,10 @@ export const Sidebar = memo(function Sidebar({
                 {...(item.search ? { search: item.search as never } : {})}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    ? "translate-x-1 bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                    : "text-sidebar-foreground hover:translate-x-0.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
                 <item.icon className="h-[18px] w-[18px] shrink-0" />
@@ -89,7 +92,9 @@ export const Sidebar = memo(function Sidebar({
 
         <div className="border-t border-sidebar-border p-4">
           <div className="rounded-lg bg-sidebar-accent px-3 py-3">
-            <p className="text-xs font-medium text-sidebar-accent-foreground">Plano Pro</p>
+            <p className="text-xs font-medium text-sidebar-accent-foreground">
+              {PLAN_LABEL[storeSettings?.plan ?? "basic"]}
+            </p>
             <p className="mt-0.5 text-xs text-muted-foreground">Gestão completa da sua loja.</p>
           </div>
         </div>

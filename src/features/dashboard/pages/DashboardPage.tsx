@@ -61,15 +61,13 @@ export function DashboardPage() {
           title="Faturamento Hoje"
           value={stats.revenue}
           icon={DollarSign}
-          trend={12.5}
-          hint="vs. ontem"
+          hint="total confirmado"
           accent="primary"
         />
         <StatsCard
           title="Vendas do Dia"
           value={stats.orders}
           icon={ShoppingCart}
-          trend={4.2}
           hint="pedidos"
           accent="success"
         />
@@ -84,8 +82,7 @@ export function DashboardPage() {
           title="Clientes"
           value={stats.customerCount}
           icon={Users}
-          trend={8.1}
-          hint="este mês"
+          hint="cadastrados"
           accent="primary"
         />
       </div>

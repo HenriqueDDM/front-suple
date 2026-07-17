@@ -31,7 +31,7 @@ export const StatsCard = memo(function StatsCard({
   const positive = (trend ?? 0) >= 0;
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="group overflow-hidden hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_12px_36px_oklch(0_0_0/0.07)]">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -40,7 +40,7 @@ export const StatsCard = memo(function StatsCard({
           </div>
           <div
             className={cn(
-              "grid h-11 w-11 shrink-0 place-items-center rounded-xl",
+              "grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-transform duration-200 group-hover:scale-105",
               accentMap[accent],
             )}
           >

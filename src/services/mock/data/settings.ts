@@ -7,4 +7,10 @@ export const storeSettings: StoreSettings = {
   cnpj: "12.345.678/0001-90",
   address: "Av. Paulista, 1000 — São Paulo, SP",
   logoUrl: "",
+  primaryColor: "#6d5dfc",
+  interfaceRadius: "rounded",
+  plan: "pro",
+  lowStockAlerts: true,
+  salesEmails: false,
+  weeklyReport: true,
 };

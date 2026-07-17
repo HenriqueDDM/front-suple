@@ -58,6 +58,7 @@
 
 :root {
   --radius: 0.75rem;
+  --brand: #6d5dfc;
 
   --background: oklch(0.985 0 0);
   --foreground: oklch(0.21 0.02 264);
@@ -170,5 +171,60 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  a,
+  input,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .app-atmosphere {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        circle at 82% 0%,
+        color-mix(in oklab, var(--brand) 12%, transparent),
+        transparent 28rem
+      ),
+      radial-gradient(
+        circle at 15% 80%,
+        color-mix(in oklab, var(--brand) 6%, transparent),
+        transparent 32rem
+      );
+    opacity: 0.75;
+  }
+
+  .page-enter {
+    animation: page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

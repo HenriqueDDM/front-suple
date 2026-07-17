@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Store, Palette, Bell, Upload, Trash2 } from "lucide-react";
+import { Bell, Check, Palette, Store, Trash2, Upload } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FormField } from "@/shared/components/forms/FormField";
 import { FormGrid } from "@/shared/components/forms/FormGrid";
@@ -28,7 +28,28 @@ const EMPTY_STORE_SETTINGS: StoreSettings = {
   cnpj: "",
   address: "",
   logoUrl: "",
+  primaryColor: "#6d5dfc",
+  interfaceRadius: "rounded",
+  plan: "basic",
+  lowStockAlerts: true,
+  salesEmails: false,
+  weeklyReport: true,
 };
+
+const COLOR_PRESETS = [
+  { name: "Violeta", value: "#6d5dfc" },
+  { name: "Azul", value: "#2563eb" },
+  { name: "Verde", value: "#059669" },
+  { name: "Laranja", value: "#ea580c" },
+  { name: "Rosa", value: "#db2777" },
+  { name: "Grafite", value: "#334155" },
+] as const;
+
+const RADIUS_OPTIONS = [
+  { value: "compact" as const, label: "Compacto", radius: "rounded-md" },
+  { value: "rounded" as const, label: "Moderno", radius: "rounded-xl" },
+  { value: "soft" as const, label: "Suave", radius: "rounded-2xl" },
+] as const;
 
 const PREFERENCE_ITEMS = [
   {
@@ -59,24 +80,32 @@ export function SettingsPage() {
   const navigate = useNavigate({ from: "/settings" });
   const search = useRouterState({ select: (s) => s.location.search });
   const activeTab = parseSettingsTab((search as { tab?: unknown }).tab);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, setBranding } = useTheme();
   const { storeSettings, updateStoreSettings } = useSettings();
   const { form: store, setField, reset } = useFormState(EMPTY_STORE_SETTINGS);
-  const [preferences, setPreferences] = useState({
-    lowStockAlerts: true,
-    salesEmails: false,
-    weeklyReport: true,
-  });
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (storeSettings) reset(storeSettings);
-  }, [storeSettings, reset]);
+    if (!storeSettings) return;
+    reset(storeSettings);
+    setBranding(storeSettings.primaryColor, storeSettings.interfaceRadius);
+  }, [storeSettings, reset, setBranding]);
 
-  const handleSaveStore = async () => {
-    await updateStoreSettings(store);
-    toast.success("Dados da loja salvos.");
+  const saveSettings = async (successMessage: string) => {
+    const { plan: _plan, ...editableSettings } = store;
+    await updateStoreSettings(editableSettings);
+    toast.success(successMessage);
+  };
+
+  const updateBranding = (primaryColor: string, interfaceRadius = store.interfaceRadius) => {
+    setField("primaryColor", primaryColor);
+    setBranding(primaryColor, interfaceRadius);
+  };
+
+  const updateRadius = (interfaceRadius: StoreSettings["interfaceRadius"]) => {
+    setField("interfaceRadius", interfaceRadius);
+    setBranding(store.primaryColor, interfaceRadius);
   };
 
   const handleLogoPick = async (file: File | undefined) => {
@@ -115,7 +144,11 @@ export function SettingsPage() {
     <>
       <PageHeader title="Configurações" description="Ajuste dados da loja e preferências." />
 
-      <Tabs value={activeTab} onValueChange={(value) => setTab(value as SettingsTab)} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setTab(value as SettingsTab)}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="store">
             <Store className="h-4 w-4" /> Loja
@@ -138,7 +171,11 @@ export function SettingsPage() {
               <div className="flex flex-wrap items-center gap-4">
                 <Avatar className="h-16 w-16 rounded-xl">
                   {store.logoUrl ? (
-                    <AvatarImage src={store.logoUrl} alt={store.name || "Logo"} className="object-cover" />
+                    <AvatarImage
+                      src={store.logoUrl}
+                      alt={store.name || "Logo"}
+                      className="object-cover"
+                    />
                   ) : null}
                   <AvatarFallback className="rounded-xl bg-primary text-lg text-primary-foreground">
                     {store.name.slice(0, 2).toUpperCase() || "LJ"}
@@ -203,67 +240,169 @@ export function SettingsPage() {
               </FormGrid>
 
               <div className="flex justify-end">
-                <Button onClick={handleSaveStore}>Salvar alterações</Button>
+                <Button onClick={() => void saveSettings("Dados da loja salvos.")}>
+                  Salvar alterações
+                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="theme">
-          <Card>
-            <CardHeader>
-              <CardTitle>Aparência</CardTitle>
-              <CardDescription>Escolha o tema do sistema.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 sm:max-w-md">
-                {(["light", "dark"] as const).map((themeOption) => (
-                  <button
-                    key={themeOption}
-                    type="button"
-                    onClick={() => setTheme(themeOption)}
-                    aria-pressed={theme === themeOption}
-                    className={cn(
-                      "rounded-xl border-2 p-3 text-left transition-colors",
-                      theme === themeOption
-                        ? "border-primary"
-                        : "border-border hover:border-muted-foreground/40",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "mb-3 h-20 rounded-lg border",
-                        themeOption === "light"
-                          ? "bg-[oklch(0.985_0_0)]"
-                          : "bg-[oklch(0.17_0.012_264)]",
-                      )}
-                    >
-                      <div className="flex h-full gap-2 p-2">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <Card>
+              <CardHeader>
+                <CardTitle>Identidade visual</CardTitle>
+                <CardDescription>Deixe o sistema com a personalidade da sua marca.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-7">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium">Cor principal</p>
+                    <p className="text-sm text-muted-foreground">
+                      Aplicada em botões, menu, gráficos e destaques.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {COLOR_PRESETS.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        title={color.name}
+                        onClick={() => updateBranding(color.value)}
+                        className="grid h-10 w-10 place-items-center rounded-full border-2 border-background shadow-sm ring-offset-background transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        style={{ backgroundColor: color.value }}
+                        aria-label={`Usar cor ${color.name}`}
+                      >
+                        {store.primaryColor.toLowerCase() === color.value ? (
+                          <Check className="h-4 w-4 text-white drop-shadow" />
+                        ) : null}
+                      </button>
+                    ))}
+                    <label className="relative grid h-10 cursor-pointer place-items-center rounded-full border bg-card px-4 text-xs font-medium transition-colors hover:bg-accent">
+                      Personalizada
+                      <input
+                        type="color"
+                        value={store.primaryColor}
+                        onChange={(event) => updateBranding(event.target.value)}
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                        aria-label="Escolher cor personalizada"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium">Estilo dos cantos</p>
+                    <p className="text-sm text-muted-foreground">
+                      Ajusta a personalidade de cards, campos e botões.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {RADIUS_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateRadius(option.value)}
+                        className={cn(
+                          "border-2 p-3 text-left transition-all hover:-translate-y-0.5",
+                          option.radius,
+                          store.interfaceRadius === option.value
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40",
+                        )}
+                      >
+                        <div className={cn("mb-3 h-10 bg-primary/15", option.radius)} />
+                        <span className="text-sm font-medium">{option.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium">Modo de exibição</p>
+                  <div className="grid grid-cols-2 gap-4 sm:max-w-md">
+                    {(["light", "dark"] as const).map((themeOption) => (
+                      <button
+                        key={themeOption}
+                        type="button"
+                        onClick={() => setTheme(themeOption)}
+                        aria-pressed={theme === themeOption}
+                        className={cn(
+                          "rounded-xl border-2 p-3 text-left transition-all hover:-translate-y-0.5",
+                          theme === themeOption
+                            ? "border-primary"
+                            : "border-border hover:border-muted-foreground/40",
+                        )}
+                      >
                         <div
                           className={cn(
-                            "w-1/3 rounded",
-                            themeOption === "light" ? "bg-white" : "bg-[oklch(0.21_0.014_264)]",
+                            "mb-3 h-20 rounded-lg border",
+                            themeOption === "light"
+                              ? "bg-[oklch(0.985_0_0)]"
+                              : "bg-[oklch(0.17_0.012_264)]",
                           )}
-                        />
-                        <div className="flex-1 space-y-1.5">
-                          <div className="h-2 w-3/4 rounded bg-primary/60" />
-                          <div
-                            className={cn(
-                              "h-2 w-1/2 rounded",
-                              themeOption === "light" ? "bg-slate-200" : "bg-white/15",
-                            )}
-                          />
+                        >
+                          <div className="flex h-full gap-2 p-2">
+                            <div
+                              className={cn(
+                                "w-1/3 rounded",
+                                themeOption === "light" ? "bg-white" : "bg-[oklch(0.21_0.014_264)]",
+                              )}
+                            />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-2 w-3/4 rounded bg-primary/60" />
+                              <div
+                                className={cn(
+                                  "h-2 w-1/2 rounded",
+                                  themeOption === "light" ? "bg-slate-200" : "bg-white/15",
+                                )}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium">
-                      {themeOption === "light" ? "Claro" : "Escuro"}
-                    </span>
-                  </button>
-                ))}
+                        <span className="text-sm font-medium">
+                          {themeOption === "light" ? "Claro" : "Escuro"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={() => void saveSettings("Identidade visual aplicada.")}>
+                    Salvar identidade visual
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden">
+              <div className="h-24 bg-primary p-5 text-primary-foreground">
+                <p className="text-xs font-medium opacity-80">Prévia da marca</p>
+                <p className="mt-1 truncate text-xl font-semibold">{store.name || "Sua loja"}</p>
               </div>
-            </CardContent>
-          </Card>
+              <CardContent className="space-y-4 p-5">
+                <div className="flex gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/15" />
+                  <div className="flex-1 space-y-2 pt-1">
+                    <div className="h-2.5 w-2/3 rounded-full bg-foreground/15" />
+                    <div className="h-2 w-1/2 rounded-full bg-muted" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-20 rounded-xl border bg-card" />
+                  <div className="h-20 rounded-xl border bg-primary/8" />
+                </div>
+                <Button className="w-full">Ação principal</Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="prefs">
@@ -281,18 +420,18 @@ export function SettingsPage() {
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                     </div>
                     <Switch
-                      checked={preferences[item.key]}
-                      onCheckedChange={(checked) =>
-                        setPreferences((current) => ({
-                          ...current,
-                          [item.key]: checked,
-                        }))
-                      }
+                      checked={store[item.key]}
+                      onCheckedChange={(checked) => setField(item.key, checked)}
                     />
                   </div>
                   {index < items.length - 1 && <Separator />}
                 </div>
               ))}
+              <div className="flex justify-end pt-5">
+                <Button onClick={() => void saveSettings("Preferências salvas.")}>
+                  Salvar preferências
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

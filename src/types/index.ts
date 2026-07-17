@@ -5,6 +5,7 @@ export type * from "./api";
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 export type PricingMode = "manual" | "markup" | "margin";
+export type InterfaceRadius = "compact" | "rounded" | "soft";
 
 export interface Product {
   id: string;
@@ -89,4 +90,10 @@ export interface StoreSettings {
   cnpj: string;
   address: string;
   logoUrl: string;
+  primaryColor: string;
+  interfaceRadius: InterfaceRadius;
+  plan: "free" | "basic" | "pro" | "enterprise";
+  lowStockAlerts: boolean;
+  salesEmails: boolean;
+  weeklyReport: boolean;
 }
