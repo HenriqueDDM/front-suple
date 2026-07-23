@@ -1,6 +1,7 @@
 // Domain types — shaped to match a future NestJS backend.
 
 export type * from "./api";
+import type { SaleInvoice } from "./api/fiscal";
 
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
@@ -69,6 +70,7 @@ export interface Sale {
   paymentMethod: PaymentMethod;
   createdAt: string;
   notes?: string;
+  invoice?: SaleInvoice | null;
 }
 
 export type MovementType = "entry" | "exit" | "adjustment";

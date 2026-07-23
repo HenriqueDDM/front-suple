@@ -1,8 +1,9 @@
 import { memo } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Dumbbell, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/shared/constants/navigation";
+import { APP_LOGO_URL, APP_NAME } from "@/shared/constants/brand";
 import { useSettings } from "@/features/settings/hooks/useSettings";
 
 const PLAN_LABEL = {
@@ -22,8 +23,8 @@ export const Sidebar = memo(function Sidebar({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { storeSettings } = useSettings();
 
-  const brandName = storeSettings?.name?.trim() || "Supl";
-  const logoUrl = storeSettings?.logoUrl?.trim() || "";
+  const brandName = storeSettings?.name?.trim() || APP_NAME;
+  const logoUrl = storeSettings?.logoUrl?.trim() || APP_LOGO_URL;
 
   const isActive = (url: string, exact?: boolean) =>
     exact ? pathname === url : pathname === url || pathname.startsWith(url + "/");
@@ -45,14 +46,12 @@ export const Sidebar = memo(function Sidebar({
         aria-label="Menu principal"
       >
         <div className="flex h-16 items-center justify-between gap-2 px-5">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={onClose}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
-            ) : (
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
-                <Dumbbell className="h-5 w-5" />
-              </div>
-            )}
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2.5" onClick={onClose}>
+            <img
+              src={logoUrl}
+              alt={brandName}
+              className="h-9 w-9 shrink-0 rounded-xl object-contain"
+            />
             <span className="truncate text-lg font-semibold tracking-tight text-sidebar-foreground">
               {brandName}
             </span>

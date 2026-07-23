@@ -28,7 +28,7 @@ type SearchResult = {
 };
 
 const ICON_BY_URL: Record<string, LucideIcon> = {
-  "/": LayoutDashboard,
+  "/dashboard": LayoutDashboard,
   "/products": Package,
   "/customers": Users,
   "/sales": ShoppingCart,

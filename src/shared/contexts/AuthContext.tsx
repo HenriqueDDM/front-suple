@@ -21,7 +21,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<AuthUser>;
   logout: () => void;
 }
 
@@ -31,7 +31,7 @@ const MOCK_USER: AuthUser = {
   userId: "mock-user",
   storeId: "mock-store",
   role: "ADMIN",
-  email: "admin@supl.com",
+  email: "admin@loja-a.com",
   name: "Administrador",
 };
 
@@ -74,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (credentials: LoginCredentials) => {
     const currentUser = await loginWithCredentials(credentials);
     setUser(currentUser);
+    return currentUser;
   }, []);
 
   const logout = useCallback(() => {

@@ -6,4 +6,6 @@ export { mockSalesService } from "./mock-sales.service";
 export { mockStockService } from "./mock-stock.service";
 export { mockReportsService } from "./mock-reports.service";
 export { mockSettingsService } from "./mock-settings.service";
+export { mockPlatformService } from "./mock-platform.service";
+export { mockFiscalService } from "./mock-fiscal.service";
 

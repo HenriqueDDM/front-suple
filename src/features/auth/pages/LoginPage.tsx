@@ -3,6 +3,8 @@ import { Navigate, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { env } from "@/config/env";
+import { APP_LOGO_URL, APP_NAME, APP_SITE_URL, APP_TAGLINE } from "@/shared/constants/brand";
+import { isPlatformAdmin } from "@/types/auth";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -10,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 import { ApiError } from "@/services/api/errors";
 
 export function LoginPage() {
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState(env.devEmail);
   const [password, setPassword] = useState(env.devPassword);
@@ -18,7 +20,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!isLoading && isAuthenticated) {
-    return <Navigate to="/" />;
+    return <Navigate to={isPlatformAdmin(user) ? "/admin" : "/dashboard"} />;
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -27,8 +29,10 @@ export function LoginPage() {
     setSubmitting(true);
 
     try {
-      await login({ email: email.trim(), password });
-      await navigate({ to: "/" });
+      const authUser = await login({ email: email.trim(), password });
+      await navigate({
+        to: authUser.role === "SUPER_ADMIN" ? "/admin" : "/dashboard",
+      });
     } catch (err) {
       const message =
         err instanceof ApiError
@@ -48,14 +52,14 @@ export function LoginPage() {
       />
       <Card className="relative z-10 w-full max-w-md border-border/80 shadow-lg">
         <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
-            S
-          </div>
+          <img
+            src={APP_LOGO_URL}
+            alt={APP_NAME}
+            className="mx-auto h-16 w-16 object-contain"
+          />
           <div>
-            <CardTitle className="text-2xl">Supl</CardTitle>
-            <CardDescription className="mt-1">
-              Entre na sua conta para gerenciar a loja.
-            </CardDescription>
+            <CardTitle className="text-2xl">{APP_NAME}</CardTitle>
+            <CardDescription className="mt-1">{APP_TAGLINE}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -101,6 +105,16 @@ export function LoginPage() {
 
             <p className="text-center text-xs text-muted-foreground">
               Conta demo do seed já preenchida. Use Entrar para acessar.
+            </p>
+            <p className="text-center text-xs text-muted-foreground">
+              <a
+                href={APP_SITE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="underline-offset-2 hover:underline"
+              >
+                tradutto.com.br
+              </a>
             </p>
           </form>
         </CardContent>

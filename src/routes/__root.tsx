@@ -28,7 +28,7 @@ function NotFoundComponent() {
         </p>
         <div className="mt-6">
           <Link
-            to="/"
+            to="/dashboard"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Voltar ao início
@@ -83,22 +83,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Supl — Gestão de Loja de Suplementos" },
+      { title: "Tradutto Suplementos — Gestão de Loja de Suplementos" },
       {
         name: "description",
         content:
-          "SaaS completo para gerenciar produtos, vendas, estoque, clientes e relatórios da sua loja de suplementos.",
+          "Sistema Tradutto para gerenciar produtos, vendas, estoque, clientes e relatórios da sua loja de suplementos.",
       },
-      { name: "author", content: "Supl" },
-      { property: "og:title", content: "Supl — Gestão de Loja de Suplementos" },
+      { name: "author", content: "Tradutto" },
+      { property: "og:title", content: "Tradutto Suplementos — Gestão de Loja de Suplementos" },
       {
         property: "og:description",
         content:
-          "SaaS completo para gerenciar produtos, vendas, estoque, clientes e relatórios da sua loja de suplementos.",
+          "Sistema Tradutto para gerenciar produtos, vendas, estoque, clientes e relatórios da sua loja de suplementos.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og-cover.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:image", content: "/og-cover.jpg" },
     ],
     links: [
       {
@@ -115,7 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,

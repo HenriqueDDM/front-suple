@@ -10,6 +10,8 @@ export {
   getStockService,
   getReportsService,
   getSettingsService,
+  getPlatformService,
+  getFiscalService,
 } from "./factory";
 export { queryKeys } from "./query-keys";
 export type {
@@ -21,5 +23,7 @@ export type {
   IStockService,
   IReportsService,
   ISettingsService,
+  IPlatformService,
+  IFiscalService,
 } from "./interfaces";
 

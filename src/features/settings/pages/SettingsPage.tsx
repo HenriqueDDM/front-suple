@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Check, Palette, Store, Trash2, Upload } from "lucide-react";
+import { Bell, Check, FileText, Palette, Store, Trash2, Upload } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FormField } from "@/shared/components/forms/FormField";
 import { FormGrid } from "@/shared/components/forms/FormGrid";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useFormState } from "@/shared/hooks/useFormState";
 import { useSettings } from "@/features/settings/hooks/useSettings";
+import { FiscalSettingsPanel } from "@/features/settings/components/FiscalSettingsPanel";
 import type { StoreSettings } from "@/types";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { resizeImageToDataUrl } from "@/shared/utils/image";
 import { toast } from "sonner";
 
-type SettingsTab = "store" | "theme" | "prefs";
+type SettingsTab = "store" | "theme" | "prefs" | "fiscal";
 
 const EMPTY_STORE_SETTINGS: StoreSettings = {
   name: "",
@@ -55,7 +56,7 @@ const PREFERENCE_ITEMS = [
   {
     key: "lowStockAlerts" as const,
     title: "Alertas de estoque baixo",
-    description: "Receba avisos quando produtos atingirem o mínimo.",
+    description: "Avisos no app e por e-mail quando produtos atingirem o mínimo.",
   },
   {
     key: "salesEmails" as const,
@@ -65,12 +66,12 @@ const PREFERENCE_ITEMS = [
   {
     key: "weeklyReport" as const,
     title: "Relatório semanal",
-    description: "Resumo de desempenho toda segunda-feira.",
+    description: "Resumo de desempenho toda segunda-feira às 8h.",
   },
 ];
 
 function parseSettingsTab(value: unknown): SettingsTab {
-  if (value === "store" || value === "theme" || value === "prefs") {
+  if (value === "store" || value === "theme" || value === "prefs" || value === "fiscal") {
     return value;
   }
   return "store";
@@ -158,6 +159,9 @@ export function SettingsPage() {
           </TabsTrigger>
           <TabsTrigger value="prefs">
             <Bell className="h-4 w-4" /> Preferências
+          </TabsTrigger>
+          <TabsTrigger value="fiscal">
+            <FileText className="h-4 w-4" /> Fiscal
           </TabsTrigger>
         </TabsList>
 
@@ -434,6 +438,10 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="fiscal">
+          <FiscalSettingsPanel />
         </TabsContent>
       </Tabs>
     </>

@@ -5,11 +5,13 @@ import { Navbar } from "@/shared/layouts/Navbar";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useSettings } from "@/features/settings/hooks/useSettings";
+import { APP_NAME } from "@/shared/constants/brand";
 import { env } from "@/config/env";
+import { isPlatformAdmin } from "@/types/auth";
 
 export const AdminLayout = memo(function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { setBranding } = useTheme();
   const { storeSettings } = useSettings();
   const navigate = useNavigate();
@@ -22,13 +24,17 @@ export const AdminLayout = memo(function AdminLayout() {
     if (env.useMockApi || isLoading) return;
     if (!isAuthenticated) {
       void navigate({ to: "/login" });
+      return;
     }
-  }, [isAuthenticated, isLoading, navigate]);
+    if (isPlatformAdmin(user)) {
+      void navigate({ to: "/admin" });
+    }
+  }, [isAuthenticated, isLoading, navigate, user]);
 
   useEffect(() => {
     if (!storeSettings) return;
     setBranding(storeSettings.primaryColor, storeSettings.interfaceRadius);
-    document.title = `${storeSettings.name || "Supl"} — Gestão da loja`;
+    document.title = `${storeSettings.name || APP_NAME} — Gestão da loja`;
   }, [setBranding, storeSettings]);
 
   if (!env.useMockApi && (isLoading || !isAuthenticated)) {

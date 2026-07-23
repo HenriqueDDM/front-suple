@@ -6,4 +6,6 @@ export type { ISalesService } from "./sales.service";
 export type { IStockService } from "./stock.service";
 export type { IReportsService } from "./reports.service";
 export type { ISettingsService } from "./settings.service";
+export type { IPlatformService } from "./platform.service";
+export type { IFiscalService } from "./fiscal.service";
 

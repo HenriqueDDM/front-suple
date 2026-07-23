@@ -11,6 +11,8 @@ import {
   HttpSettingsService,
   HttpStockService,
   HttpSuppliersService,
+  HttpPlatformService,
+  HttpFiscalService,
 } from "@/services/http";
 import type {
   ICustomersService,
@@ -21,6 +23,8 @@ import type {
   ISettingsService,
   IStockService,
   ISuppliersService,
+  IPlatformService,
+  IFiscalService,
 } from "@/services/interfaces";
 import {
   mockCustomersService,
@@ -31,6 +35,8 @@ import {
   mockSettingsService,
   mockStockService,
   mockSuppliersService,
+  mockPlatformService,
+  mockFiscalService,
 } from "@/services/mock";
 
 export { ensureApiReady } from "@/services/api/bootstrap";
@@ -77,4 +83,12 @@ export function getReportsService(): IReportsService {
 
 export function getSettingsService(): ISettingsService {
   return env.useMockApi ? mockSettingsService : new HttpSettingsService(getApiClient());
+}
+
+export function getPlatformService(): IPlatformService {
+  return env.useMockApi ? mockPlatformService : new HttpPlatformService(getApiClient());
+}
+
+export function getFiscalService(): IFiscalService {
+  return env.useMockApi ? mockFiscalService : new HttpFiscalService(getApiClient());
 }

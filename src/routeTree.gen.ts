@@ -11,15 +11,20 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/_app'
-import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminStoresRouteImport } from './routes/admin.stores'
 import { Route as AppSuppliersRouteImport } from './routes/_app.suppliers'
 import { Route as AppStockRouteImport } from './routes/_app.stock'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSalesRouteImport } from './routes/_app.sales'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCustomersRouteImport } from './routes/_app.customers'
+import { Route as AdminStoresStoreIdRouteImport } from './routes/admin.stores_.$storeId'
 import { Route as AppSuppliersSupplierIdRouteImport } from './routes/_app.suppliers_.$supplierId'
 import { Route as AppProductsProductIdRouteImport } from './routes/_app.products_.$productId'
 import { Route as AppCustomersCustomerIdRouteImport } from './routes/_app.customers_.$customerId'
@@ -34,14 +39,29 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStoresRoute = AdminStoresRouteImport.update({
+  id: '/stores',
+  path: '/stores',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AppSuppliersRoute = AppSuppliersRouteImport.update({
   id: '/suppliers',
@@ -73,10 +93,20 @@ const AppProductsRoute = AppProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCustomersRoute = AppCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
   getParentRoute: () => AppRoute,
+} as any)
+const AdminStoresStoreIdRoute = AdminStoresStoreIdRouteImport.update({
+  id: '/stores_/$storeId',
+  path: '/stores/$storeId',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AppSuppliersSupplierIdRoute = AppSuppliersSupplierIdRouteImport.update({
   id: '/suppliers_/$supplierId',
@@ -95,103 +125,133 @@ const AppCustomersCustomerIdRoute = AppCustomersCustomerIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/customers': typeof AppCustomersRoute
+  '/dashboard': typeof AppDashboardRoute
   '/products': typeof AppProductsRoute
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
   '/stock': typeof AppStockRoute
   '/suppliers': typeof AppSuppliersRoute
+  '/admin/stores': typeof AdminStoresRoute
+  '/admin/': typeof AdminIndexRoute
   '/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/products/$productId': typeof AppProductsProductIdRoute
   '/suppliers/$supplierId': typeof AppSuppliersSupplierIdRoute
+  '/admin/stores/$storeId': typeof AdminStoresStoreIdRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/customers': typeof AppCustomersRoute
+  '/dashboard': typeof AppDashboardRoute
   '/products': typeof AppProductsRoute
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
   '/stock': typeof AppStockRoute
   '/suppliers': typeof AppSuppliersRoute
-  '/': typeof AppIndexRoute
+  '/admin/stores': typeof AdminStoresRoute
+  '/admin': typeof AdminIndexRoute
   '/customers/$customerId': typeof AppCustomersCustomerIdRoute
   '/products/$productId': typeof AppProductsProductIdRoute
   '/suppliers/$supplierId': typeof AppSuppliersSupplierIdRoute
+  '/admin/stores/$storeId': typeof AdminStoresStoreIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_app/customers': typeof AppCustomersRoute
+  '/_app/dashboard': typeof AppDashboardRoute
   '/_app/products': typeof AppProductsRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/sales': typeof AppSalesRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/stock': typeof AppStockRoute
   '/_app/suppliers': typeof AppSuppliersRoute
-  '/_app/': typeof AppIndexRoute
+  '/admin/stores': typeof AdminStoresRoute
+  '/admin/': typeof AdminIndexRoute
   '/_app/customers_/$customerId': typeof AppCustomersCustomerIdRoute
   '/_app/products_/$productId': typeof AppProductsProductIdRoute
   '/_app/suppliers_/$supplierId': typeof AppSuppliersSupplierIdRoute
+  '/admin/stores_/$storeId': typeof AdminStoresStoreIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/sitemap.xml'
     | '/customers'
+    | '/dashboard'
     | '/products'
     | '/reports'
     | '/sales'
     | '/settings'
     | '/stock'
     | '/suppliers'
+    | '/admin/stores'
+    | '/admin/'
     | '/customers/$customerId'
     | '/products/$productId'
     | '/suppliers/$supplierId'
+    | '/admin/stores/$storeId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/login'
     | '/sitemap.xml'
     | '/customers'
+    | '/dashboard'
     | '/products'
     | '/reports'
     | '/sales'
     | '/settings'
     | '/stock'
     | '/suppliers'
-    | '/'
+    | '/admin/stores'
+    | '/admin'
     | '/customers/$customerId'
     | '/products/$productId'
     | '/suppliers/$supplierId'
+    | '/admin/stores/$storeId'
   id:
     | '__root__'
+    | '/'
     | '/_app'
+    | '/admin'
     | '/login'
     | '/sitemap.xml'
     | '/_app/customers'
+    | '/_app/dashboard'
     | '/_app/products'
     | '/_app/reports'
     | '/_app/sales'
     | '/_app/settings'
     | '/_app/stock'
     | '/_app/suppliers'
-    | '/_app/'
+    | '/admin/stores'
+    | '/admin/'
     | '/_app/customers_/$customerId'
     | '/_app/products_/$productId'
     | '/_app/suppliers_/$supplierId'
+    | '/admin/stores_/$storeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
@@ -212,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -219,12 +286,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/': {
-      id: '/_app/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/stores': {
+      id: '/admin/stores'
+      path: '/stores'
+      fullPath: '/admin/stores'
+      preLoaderRoute: typeof AdminStoresRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_app/suppliers': {
       id: '/_app/suppliers'
@@ -268,12 +349,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProductsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/customers': {
       id: '/_app/customers'
       path: '/customers'
       fullPath: '/customers'
       preLoaderRoute: typeof AppCustomersRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/admin/stores_/$storeId': {
+      id: '/admin/stores_/$storeId'
+      path: '/stores/$storeId'
+      fullPath: '/admin/stores/$storeId'
+      preLoaderRoute: typeof AdminStoresStoreIdRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_app/suppliers_/$supplierId': {
       id: '/_app/suppliers_/$supplierId'
@@ -301,13 +396,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCustomersRoute: typeof AppCustomersRoute
+  AppDashboardRoute: typeof AppDashboardRoute
   AppProductsRoute: typeof AppProductsRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSalesRoute: typeof AppSalesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppStockRoute: typeof AppStockRoute
   AppSuppliersRoute: typeof AppSuppliersRoute
-  AppIndexRoute: typeof AppIndexRoute
   AppCustomersCustomerIdRoute: typeof AppCustomersCustomerIdRoute
   AppProductsProductIdRoute: typeof AppProductsProductIdRoute
   AppSuppliersSupplierIdRoute: typeof AppSuppliersSupplierIdRoute
@@ -315,13 +410,13 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCustomersRoute: AppCustomersRoute,
+  AppDashboardRoute: AppDashboardRoute,
   AppProductsRoute: AppProductsRoute,
   AppReportsRoute: AppReportsRoute,
   AppSalesRoute: AppSalesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppStockRoute: AppStockRoute,
   AppSuppliersRoute: AppSuppliersRoute,
-  AppIndexRoute: AppIndexRoute,
   AppCustomersCustomerIdRoute: AppCustomersCustomerIdRoute,
   AppProductsProductIdRoute: AppProductsProductIdRoute,
   AppSuppliersSupplierIdRoute: AppSuppliersSupplierIdRoute,
@@ -329,8 +424,24 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface AdminRouteChildren {
+  AdminStoresRoute: typeof AdminStoresRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminStoresStoreIdRoute: typeof AdminStoresStoreIdRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminStoresRoute: AdminStoresRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminStoresStoreIdRoute: AdminStoresStoreIdRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }

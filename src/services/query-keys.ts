@@ -41,4 +41,14 @@ export const queryKeys = {
   settings: {
     store: ["settings", "store"] as const,
   },
+  fiscal: {
+    settings: ["fiscal", "settings"] as const,
+    sale: (saleId: string) => ["fiscal", "sale", saleId] as const,
+  },
+  platform: {
+    summary: ["platform", "summary"] as const,
+    stores: ["platform", "stores"] as const,
+    store: (id: string) => ["platform", "stores", id] as const,
+    storeUsers: (id: string) => ["platform", "stores", id, "users"] as const,
+  },
 } as const;

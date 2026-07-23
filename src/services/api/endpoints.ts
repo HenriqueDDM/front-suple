@@ -45,4 +45,17 @@ export const API_ENDPOINTS = {
   settings: {
     store: "/settings/store",
   },
+  fiscal: {
+    settings: "/fiscal/settings",
+    emit: (saleId: string) => `/fiscal/sales/${saleId}/emit`,
+    forSale: (saleId: string) => `/fiscal/sales/${saleId}`,
+    refresh: (id: string) => `/fiscal/invoices/${id}/refresh`,
+    cancel: (id: string) => `/fiscal/invoices/${id}/cancel`,
+  },
+  platform: {
+    summary: "/platform/summary",
+    stores: "/platform/stores",
+    store: (id: string) => `/platform/stores/${id}`,
+    storeUsers: (id: string) => `/platform/stores/${id}/users`,
+  },
 } as const;

@@ -22,6 +22,7 @@ import { getInitials } from "@/shared/utils/string";
 import { env } from "@/config/env";
 
 const ROLE_LABEL: Record<string, string> = {
+  SUPER_ADMIN: "Admin plataforma",
   ADMIN: "Administrador",
   MANAGER: "Gerente",
   SELLER: "Vendedor",

@@ -5,7 +5,7 @@ const suppliersPage = lazyPage(() => import("@/features/suppliers"), "SuppliersP
 
 export const Route = createFileRoute("/_app/suppliers")({
   head: () => ({
-    meta: [{ title: "Fornecedores — Supl" }],
+    meta: [{ title: "Fornecedores — Tradutto Suplementos" }],
   }),
   ...suppliersPage,
 });

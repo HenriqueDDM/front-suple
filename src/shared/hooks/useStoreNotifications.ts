@@ -8,7 +8,7 @@ import {
   UserRoundX,
   type LucideIcon,
 } from "lucide-react";
-import { getCustomersService, getProductsService, queryKeys } from "@/services";
+import { getCustomersService, getProductsService, getSettingsService, queryKeys } from "@/services";
 import { stockStatus } from "@/shared/utils/format";
 import type { Customer, Product } from "@/types";
 
@@ -164,10 +164,17 @@ function buildCustomerNotifications(customers: Customer[]): StoreNotification[] 
 
 const productsService = getProductsService();
 const customersService = getCustomersService();
+const settingsService = getSettingsService();
 
 export function useStoreNotifications() {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<Set<string>>(() => readDismissed());
+
+  const settingsQuery = useQuery({
+    queryKey: queryKeys.settings.store,
+    queryFn: () => settingsService.getStoreSettings(),
+    staleTime: 60_000,
+  });
 
   const productsQuery = useQuery({
     queryKey: queryKeys.products.all,
@@ -184,6 +191,7 @@ export function useStoreNotifications() {
   const all = useMemo(() => {
     const products = productsQuery.data ?? [];
     const customers = customersQuery.data ?? [];
+    const lowStockAlertsEnabled = settingsQuery.data?.lowStockAlerts ?? true;
     const priority: Record<StoreNotificationKind, number> = {
       out_of_stock: 0,
       low_stock: 1,
@@ -191,10 +199,14 @@ export function useStoreNotifications() {
       inactive_customer: 3,
     };
 
-    return [...buildProductNotifications(products), ...buildCustomerNotifications(customers)]
+    const productNotifications = lowStockAlertsEnabled
+      ? buildProductNotifications(products)
+      : [];
+
+    return [...productNotifications, ...buildCustomerNotifications(customers)]
       .sort((a, b) => priority[a.kind] - priority[b.kind])
       .slice(0, 20);
-  }, [customersQuery.data, productsQuery.data]);
+  }, [customersQuery.data, productsQuery.data, settingsQuery.data?.lowStockAlerts]);
 
   const notifications = useMemo(
     () => all.filter((item) => !dismissed.has(item.id)),

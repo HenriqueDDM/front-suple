@@ -27,6 +27,21 @@ export type { CreateSaleDto, CreateSaleItemDto, SaleResponse } from "./sales";
 export type { CreateStockMovementDto } from "./stock";
 export type { UpdateStoreSettingsDto } from "./settings";
 export type {
+  PlatformPlan,
+  PlatformStoreStatus,
+  PlatformStore,
+  PlatformSummary,
+  PlatformStoreUser,
+  CreatePlatformStoreDto,
+  UpdatePlatformStoreDto,
+} from "./platform";
+export type {
+  FiscalSettings,
+  UpdateFiscalSettingsDto,
+  SaleInvoice,
+  InvoiceStatus,
+} from "./fiscal";
+export type {
   SalesTrendPoint,
   SalesByCategoryPoint,
   TopProductReport,

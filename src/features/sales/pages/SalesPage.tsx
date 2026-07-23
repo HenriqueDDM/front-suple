@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Gift, ShoppingCart } from "lucide-react";
+import { ExternalLink, FileText, Gift, ShoppingCart } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { SearchInput } from "@/shared/components/SearchInput";
@@ -9,6 +9,7 @@ import { CartLineItem } from "@/features/sales/components/CartLineItem";
 import { CustomerSearchSelect } from "@/features/sales/components/CustomerSearchSelect";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { useSales } from "@/features/sales/hooks/useSales";
+import { useSaleInvoiceActions } from "@/features/settings/hooks/useFiscalSettings";
 import { useSearchFilter } from "@/shared/hooks/useSearchFilter";
 import { useCustomers } from "@/features/customers/hooks/useCustomers";
 import { WALK_IN_CUSTOMER_ID } from "@/shared/constants/sales";
@@ -16,6 +17,7 @@ import { formatCurrency, paymentMethodLabel } from "@/shared/utils/format";
 import { parseNumericInput } from "@/shared/utils/number";
 import { ApiError } from "@/services";
 import type { PaymentMethod, Product } from "@/types";
+import type { SaleInvoice } from "@/types/api";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
@@ -35,10 +37,36 @@ function cartLineKey(productId: string, isGift: boolean): string {
   return `${productId}:${isGift}`;
 }
 
+const INVOICE_STATUS_LABEL: Record<SaleInvoice["status"], string> = {
+  pending: "Pendente",
+  authorized: "Autorizada",
+  rejected: "Rejeitada",
+  cancelled: "Cancelada",
+  simulated: "Simulada",
+};
+
+function invoiceToastDescription(invoice: SaleInvoice | null | undefined): string | null {
+  if (!invoice) return null;
+  if (invoice.status === "simulated") {
+    return `NFC-e simulada nº ${invoice.number || "—"}`;
+  }
+  if (invoice.status === "authorized") {
+    return `NFC-e autorizada nº ${invoice.number}`;
+  }
+  if (invoice.status === "rejected") {
+    return `NFC-e rejeitada${invoice.rejectionReason ? `: ${invoice.rejectionReason}` : ""}`;
+  }
+  if (invoice.status === "pending") {
+    return "NFC-e em processamento";
+  }
+  return `NFC-e: ${INVOICE_STATUS_LABEL[invoice.status]}`;
+}
+
 export function SalesPage() {
   const { items: products } = useProducts();
   const { items: customers } = useCustomers();
   const { createSale } = useSales();
+  const { emitInvoice, isEmitting } = useSaleInvoiceActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [customerId, setCustomerId] = useState<string>(WALK_IN_CUSTOMER_ID);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -47,6 +75,9 @@ export function SalesPage() {
   const [notes, setNotes] = useState("");
   const [isAddingGift, setIsAddingGift] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastInvoice, setLastInvoice] = useState<SaleInvoice | null>(null);
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null);
+  const [lastSaleCode, setLastSaleCode] = useState<string | null>(null);
 
   const getProductSearchText = useCallback((product: Product) => product.name, []);
 
@@ -151,7 +182,7 @@ export function SalesPage() {
 
     setIsSubmitting(true);
     try {
-      await createSale({
+      const sale = await createSale({
         customerId: customerId === WALK_IN_CUSTOMER_ID ? null : customerId,
         items: cart.map((line) => ({
           productId: line.product.id,
@@ -164,10 +195,26 @@ export function SalesPage() {
       });
 
       const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
+      const invoiceHint = invoiceToastDescription(sale.invoice);
       toast.success(`Venda finalizada — ${formatCurrency(total)}`, {
-        description: `${paymentMethodLabel[paymentMethod]} · ${itemCount} item(s)`,
+        description: [
+          `${paymentMethodLabel[paymentMethod]} · ${itemCount} item(s)`,
+          invoiceHint,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        action:
+          sale.invoice?.danfeUrl
+            ? {
+                label: "DANFE",
+                onClick: () => window.open(sale.invoice!.danfeUrl, "_blank"),
+              }
+            : undefined,
       });
 
+      setLastInvoice(sale.invoice ?? null);
+      setLastSaleId(sale.id);
+      setLastSaleCode(sale.code);
       setCart([]);
       setDiscount(0);
       setNotes("");
@@ -186,9 +233,80 @@ export function SalesPage() {
     }
   }, [cart, createSale, customerId, discount, notes, paymentMethod, total]);
 
+  const handleEmitInvoice = useCallback(async () => {
+    if (!lastSaleId) return;
+    try {
+      const invoice = await emitInvoice({ saleId: lastSaleId });
+      setLastInvoice(invoice);
+      toast.success(`NFC-e ${INVOICE_STATUS_LABEL[invoice.status]}`, {
+        description: invoice.number ? `Nº ${invoice.number}` : undefined,
+        action: invoice.danfeUrl
+          ? {
+              label: "DANFE",
+              onClick: () => window.open(invoice.danfeUrl, "_blank"),
+            }
+          : undefined,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao emitir NFC-e.");
+    }
+  }, [emitInvoice, lastSaleId]);
+
   return (
     <>
       <PageHeader title="Vendas (PDV)" description="Registre uma nova venda." />
+
+      {lastSaleCode ? (
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <FileText className="mt-0.5 h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">Venda {lastSaleCode}</p>
+                {lastInvoice ? (
+                  <p className="text-sm text-muted-foreground">
+                    NFC-e {INVOICE_STATUS_LABEL[lastInvoice.status]}
+                    {lastInvoice.number ? ` · nº ${lastInvoice.number}` : ""}
+                    {lastInvoice.series ? ` · série ${lastInvoice.series}` : ""}
+                    {lastInvoice.status === "simulated"
+                      ? " · modo simulado (sem token Focus)"
+                      : ""}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma nota emitida para esta venda.
+                  </p>
+                )}
+                {lastInvoice?.rejectionReason ? (
+                  <p className="mt-1 text-sm text-destructive">{lastInvoice.rejectionReason}</p>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {!lastInvoice ||
+              lastInvoice.status === "rejected" ||
+              lastInvoice.status === "cancelled" ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!lastSaleId || isEmitting}
+                  onClick={() => void handleEmitInvoice()}
+                >
+                  {isEmitting ? "Emitindo…" : "Emitir NFC-e"}
+                </Button>
+              ) : null}
+              {lastInvoice?.danfeUrl ? (
+                <Button type="button" variant="outline" size="sm" asChild>
+                  <a href={lastInvoice.danfeUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink className="h-4 w-4" /> DANFE
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
