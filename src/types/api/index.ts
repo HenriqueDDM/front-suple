@@ -24,6 +24,7 @@ export type {
   CustomerProfile,
 } from "./customers";
 export type { CreateSaleDto, CreateSaleItemDto, SaleResponse } from "./sales";
+export type { PaginatedResult, SalesListQuery } from "./pagination";
 export type { CreateStockMovementDto } from "./stock";
 export type { UpdateStoreSettingsDto } from "./settings";
 export type {

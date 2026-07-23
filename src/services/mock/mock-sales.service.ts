@@ -3,7 +3,7 @@ import { mockCustomersService } from "@/services/mock/mock-customers.service";
 import { mockProductsService } from "@/services/mock/mock-products.service";
 import type { ISalesService } from "@/services/interfaces";
 import type { Sale } from "@/types";
-import type { CreateSaleDto } from "@/types/api";
+import type { CreateSaleDto, PaginatedResult, SalesListQuery } from "@/types/api";
 
 class MockSalesService implements ISalesService {
   private store: Sale[] = [...seedSales];
@@ -11,6 +11,22 @@ class MockSalesService implements ISalesService {
 
   async findAll(): Promise<Sale[]> {
     return [...this.store];
+  }
+
+  async findPaginated(query: SalesListQuery): Promise<PaginatedResult<Sale>> {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query.limit ?? 10));
+    const sorted = [...this.store].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    const total = sorted.length;
+    const start = (page - 1) * limit;
+    return {
+      items: sorted.slice(start, start + limit),
+      total,
+      page,
+      pages: Math.max(1, Math.ceil(total / limit)),
+    };
   }
 
   async findById(id: string): Promise<Sale | null> {

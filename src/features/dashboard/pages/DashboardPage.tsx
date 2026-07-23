@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -13,6 +13,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { StatsCard } from "@/shared/components/StatsCard";
 import { LowStockList } from "@/shared/components/LowStockList";
 import { DataTable } from "@/shared/components/DataTable";
+import { TablePagination } from "@/shared/components/TablePagination";
 import { ChartCard } from "@/shared/components/charts/ChartCard";
 import { ChartCurrencyTooltip } from "@/shared/components/charts/ChartCurrencyTooltip";
 import {
@@ -26,13 +27,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/shared/ui/badge";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { useReports } from "@/features/reports/hooks/useReports";
+import { useRecentSales } from "@/features/dashboard/hooks/useRecentSales";
 import { formatCurrency, formatDateTime, paymentMethodLabel } from "@/shared/utils/format";
 
 const REVENUE_CHART_TOOLTIP = <ChartCurrencyTooltip valueLabel="Faturamento:" />;
+const RECENT_SALES_PAGE_SIZE = 10;
 
 export function DashboardPage() {
   const { items: products } = useProducts();
-  const { sales, salesTrend, dashboardStats } = useReports();
+  const { salesTrend, dashboardStats } = useReports(undefined, {
+    includeSalesList: false,
+  });
+  const [salesPage, setSalesPage] = useState(1);
+  const {
+    items: recentSales,
+    total: salesTotal,
+    pages: salesPages,
+    isLoading: salesLoading,
+    isFetching: salesFetching,
+  } = useRecentSales(salesPage, RECENT_SALES_PAGE_SIZE);
 
   const stats = useMemo(() => {
     if (!dashboardStats) {
@@ -132,7 +145,7 @@ export function DashboardPage() {
           <CardTitle>Últimas vendas</CardTitle>
           <CardDescription>Transações mais recentes</CardDescription>
         </CardHeader>
-        <CardContent className="px-0 sm:px-6">
+        <CardContent className="space-y-0 px-0 sm:px-6">
           <DataTable>
             <Table>
               <TableHeader>
@@ -145,7 +158,21 @@ export function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.map((sale) => (
+                {salesLoading && recentSales.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      Carregando vendas…
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+                {!salesLoading && recentSales.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      Nenhuma venda registrada.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+                {recentSales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.code}</TableCell>
                     <TableCell>{sale.customerName}</TableCell>
@@ -163,6 +190,14 @@ export function DashboardPage() {
               </TableBody>
             </Table>
           </DataTable>
+          <TablePagination
+            page={salesPage}
+            pages={salesPages}
+            total={salesTotal}
+            limit={RECENT_SALES_PAGE_SIZE}
+            isLoading={salesFetching}
+            onPageChange={setSalesPage}
+          />
         </CardContent>
       </Card>
     </>

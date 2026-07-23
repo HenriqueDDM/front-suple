@@ -7,10 +7,14 @@ import type { ReportPeriod } from "@/types/api";
 
 const reportsService = getReportsService();
 
-export function useReports(period?: ReportPeriod) {
+export function useReports(
+  period?: ReportPeriod,
+  options?: { includeSalesList?: boolean },
+) {
   const { isLoading: authLoading } = useAuth();
   const from = period?.from;
   const to = period?.to;
+  const includeSalesList = options?.includeSalesList ?? true;
   const canFetch =
     typeof window !== "undefined" &&
     !authLoading &&
@@ -19,7 +23,7 @@ export function useReports(period?: ReportPeriod) {
   const salesQuery = useQuery({
     queryKey: queryKeys.reports.sales,
     queryFn: () => reportsService.getSales(),
-    enabled: canFetch,
+    enabled: canFetch && includeSalesList,
   });
 
   const salesTrendQuery = useQuery({
@@ -65,7 +69,7 @@ export function useReports(period?: ReportPeriod) {
       salesByCategoryQuery.isLoading ||
       topProductsQuery.isLoading ||
       summaryQuery.isLoading,
-    isDashboardLoading: !canFetch || dashboardStatsQuery.isLoading || salesQuery.isLoading,
+    isDashboardLoading: !canFetch || dashboardStatsQuery.isLoading,
     error:
       salesTrendQuery.error ??
       salesByCategoryQuery.error ??

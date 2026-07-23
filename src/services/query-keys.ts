@@ -20,6 +20,8 @@ export const queryKeys = {
   sales: {
     all: ["sales"] as const,
     detail: (id: string) => ["sales", id] as const,
+    paginated: (page: number, limit: number) =>
+      ["sales", "paginated", page, limit] as const,
   },
   stock: {
     movements: ["stock", "movements"] as const,

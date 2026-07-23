@@ -20,6 +20,7 @@ export function useSales() {
     mutationFn: (dto: CreateSaleDto) => salesService.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.sales.all });
+      queryClient.invalidateQueries({ queryKey: ["sales", "paginated"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stock.movements });
       queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
