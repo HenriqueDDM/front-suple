@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Check, FileText, Palette, Store, Trash2, Upload } from "lucide-react";
+import { Bell, Check, FileText, Palette, Store, Trash2, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FormField } from "@/shared/components/forms/FormField";
 import { FormGrid } from "@/shared/components/forms/FormGrid";
 import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { useFormState } from "@/shared/hooks/useFormState";
 import { useSettings } from "@/features/settings/hooks/useSettings";
 import { FiscalSettingsPanel } from "@/features/settings/components/FiscalSettingsPanel";
+import { TeamSettingsPanel } from "@/features/settings/components/TeamSettingsPanel";
+import { isStoreAdmin } from "@/types/auth";
 import type { StoreSettings } from "@/types";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -20,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { resizeImageToDataUrl } from "@/shared/utils/image";
 import { toast } from "sonner";
 
-type SettingsTab = "store" | "theme" | "prefs" | "fiscal";
+type SettingsTab = "store" | "theme" | "prefs" | "fiscal" | "team";
 
 const EMPTY_STORE_SETTINGS: StoreSettings = {
   name: "",
@@ -71,7 +74,13 @@ const PREFERENCE_ITEMS = [
 ];
 
 function parseSettingsTab(value: unknown): SettingsTab {
-  if (value === "store" || value === "theme" || value === "prefs" || value === "fiscal") {
+  if (
+    value === "store" ||
+    value === "theme" ||
+    value === "prefs" ||
+    value === "fiscal" ||
+    value === "team"
+  ) {
     return value;
   }
   return "store";
@@ -80,7 +89,10 @@ function parseSettingsTab(value: unknown): SettingsTab {
 export function SettingsPage() {
   const navigate = useNavigate({ from: "/settings" });
   const search = useRouterState({ select: (s) => s.location.search });
-  const activeTab = parseSettingsTab((search as { tab?: unknown }).tab);
+  const requestedTab = parseSettingsTab((search as { tab?: unknown }).tab);
+  const { user } = useAuth();
+  const showTeam = isStoreAdmin(user);
+  const activeTab = requestedTab === "team" && !showTeam ? "store" : requestedTab;
   const { theme, setTheme, setBranding } = useTheme();
   const { storeSettings, updateStoreSettings } = useSettings();
   const { form: store, setField, reset } = useFormState(EMPTY_STORE_SETTINGS);
@@ -163,6 +175,11 @@ export function SettingsPage() {
           <TabsTrigger value="fiscal">
             <FileText className="h-4 w-4" /> Fiscal
           </TabsTrigger>
+          {showTeam ? (
+            <TabsTrigger value="team">
+              <Users className="h-4 w-4" /> Equipe
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent value="store">
@@ -443,6 +460,12 @@ export function SettingsPage() {
         <TabsContent value="fiscal">
           <FiscalSettingsPanel />
         </TabsContent>
+
+        {showTeam ? (
+          <TabsContent value="team">
+            <TeamSettingsPanel />
+          </TabsContent>
+        ) : null}
       </Tabs>
     </>
   );

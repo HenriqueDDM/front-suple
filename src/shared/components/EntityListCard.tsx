@@ -8,6 +8,8 @@ interface EntityListCardProps {
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
   searchClassName?: string;
+  isLoading?: boolean;
+  loadingState?: ReactNode;
   isEmpty: boolean;
   emptyState: ReactNode;
   children: ReactNode;
@@ -19,6 +21,8 @@ export function EntityListCard({
   onSearchChange,
   searchPlaceholder,
   searchClassName,
+  isLoading = false,
+  loadingState,
   isEmpty,
   emptyState,
   children,
@@ -33,7 +37,7 @@ export function EntityListCard({
           placeholder={searchPlaceholder}
           className={cn("max-w-sm", searchClassName)}
         />
-        {isEmpty ? emptyState : children}
+        {isLoading ? (loadingState ?? null) : isEmpty ? emptyState : children}
       </CardContent>
     </Card>
   );

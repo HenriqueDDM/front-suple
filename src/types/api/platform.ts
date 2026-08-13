@@ -40,7 +40,7 @@ export interface CreatePlatformStoreDto {
   plan?: PlatformPlan;
   adminName: string;
   adminEmail: string;
-  adminPassword?: string;
+  adminPassword: string;
 }
 
 export interface UpdatePlatformStoreDto {

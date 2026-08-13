@@ -12,6 +12,7 @@ interface FormDialogProps {
   className?: string;
   submitLabel?: string;
   cancelLabel?: string;
+  submitDisabled?: boolean;
 }
 
 export function FormDialog({
@@ -23,6 +24,7 @@ export function FormDialog({
   className,
   submitLabel = "Salvar",
   cancelLabel = "Cancelar",
+  submitDisabled = false,
 }: FormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,10 +34,12 @@ export function FormDialog({
         </DialogHeader>
         {children}
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitDisabled}>
             {cancelLabel}
           </Button>
-          <Button onClick={onSubmit}>{submitLabel}</Button>
+          <Button onClick={onSubmit} disabled={submitDisabled}>
+            {submitLabel}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

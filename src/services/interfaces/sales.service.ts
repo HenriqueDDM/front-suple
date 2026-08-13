@@ -6,4 +6,5 @@ export interface ISalesService {
   findPaginated(query: SalesListQuery): Promise<PaginatedResult<Sale>>;
   findById(id: string): Promise<Sale | null>;
   create(dto: CreateSaleDto): Promise<Sale>;
+  cancel(id: string): Promise<Sale>;
 }

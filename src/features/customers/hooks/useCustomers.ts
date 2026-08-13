@@ -42,8 +42,9 @@ export function useCustomers() {
     items,
     isLoading,
     error,
-    createCustomer: createMutation.mutate,
-    updateCustomer: (id: string, dto: UpdateCustomerDto) => updateMutation.mutate({ id, dto }),
-    deleteCustomer: deleteMutation.mutate,
+    createCustomer: createMutation.mutateAsync,
+    updateCustomer: (id: string, dto: UpdateCustomerDto) =>
+      updateMutation.mutateAsync({ id, dto }),
+    deleteCustomer: deleteMutation.mutateAsync,
   };
 }

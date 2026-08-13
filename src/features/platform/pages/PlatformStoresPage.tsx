@@ -38,7 +38,7 @@ import { toast } from "sonner";
 const PLAN_LABEL: Record<PlatformPlan, string> = {
   free: "Free",
   basic: "Essencial",
-  pro: "Completo IA",
+  pro: "Completo recompra",
   enterprise: "Enterprise",
 };
 
@@ -57,7 +57,7 @@ const emptyForm: CreatePlatformStoreDto = {
   plan: "basic",
   adminName: "",
   adminEmail: "",
-  adminPassword: "password123",
+  adminPassword: "",
 };
 
 export function PlatformStoresPage() {
@@ -78,6 +78,14 @@ export function PlatformStoresPage() {
 
   const handleCreate = async (event: FormEvent) => {
     event.preventDefault();
+    if (form.adminPassword.trim().length < 8) {
+      toast.error("A senha do admin precisa ter pelo menos 8 caracteres.");
+      return;
+    }
+    if (form.adminPassword.trim() === "password123") {
+      toast.error("Escolha uma senha diferente da senha padrão de demonstração.");
+      return;
+    }
     try {
       await createStore.mutateAsync(form);
       toast.success("Loja criada com sucesso");
@@ -304,7 +312,11 @@ export function PlatformStoresPage() {
             </div>
             <Field label="Senha inicial do admin">
               <Input
-                type="text"
+                required
+                type="password"
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="Mínimo 8 caracteres"
                 value={form.adminPassword}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, adminPassword: event.target.value }))

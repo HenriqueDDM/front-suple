@@ -42,6 +42,7 @@ export type {
   SaleInvoice,
   InvoiceStatus,
 } from "./fiscal";
+export type { StoreUser, CreateStoreUserDto } from "./users";
 export type {
   SalesTrendPoint,
   SalesByCategoryPoint,

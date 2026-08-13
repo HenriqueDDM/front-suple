@@ -45,9 +45,10 @@ export function useProducts() {
     items,
     isLoading,
     error,
-    createProduct: createMutation.mutate,
-    updateProduct: (id: string, dto: UpdateProductDto) => updateMutation.mutate({ id, dto }),
-    deleteProduct: deleteMutation.mutate,
+    createProduct: createMutation.mutateAsync,
+    updateProduct: (id: string, dto: UpdateProductDto) =>
+      updateMutation.mutateAsync({ id, dto }),
+    deleteProduct: deleteMutation.mutateAsync,
   };
 }
 

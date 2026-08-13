@@ -78,12 +78,31 @@ class MockSalesService implements ISalesService {
       discount: dto.discount,
       total,
       paymentMethod: dto.paymentMethod,
+      status: "completed",
       createdAt: new Date().toISOString(),
       notes: dto.notes ?? "",
     };
 
     this.store = [sale, ...this.store];
     return sale;
+  }
+
+  async cancel(id: string): Promise<Sale> {
+    const sale = this.store.find((item) => item.id === id);
+    if (!sale) throw new Error("Sale not found");
+    if (sale.status === "cancelled") throw new Error("Sale is already cancelled");
+
+    for (const item of sale.items) {
+      const product = await mockProductsService.findById(item.productId);
+      if (!product) continue;
+      await mockProductsService.update(item.productId, {
+        quantity: product.quantity + item.quantity,
+      });
+    }
+
+    const cancelled: Sale = { ...sale, status: "cancelled" };
+    this.store = this.store.map((item) => (item.id === id ? cancelled : item));
+    return cancelled;
   }
 }
 

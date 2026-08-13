@@ -20,3 +20,11 @@ export interface LoginCredentials {
 export function isPlatformAdmin(user: AuthUser | null | undefined): boolean {
   return user?.role === "SUPER_ADMIN";
 }
+
+export function isStoreAdmin(user: AuthUser | null | undefined): boolean {
+  return user?.role === "ADMIN";
+}
+
+export function canManageSales(user: AuthUser | null | undefined): boolean {
+  return user?.role === "ADMIN" || user?.role === "MANAGER";
+}

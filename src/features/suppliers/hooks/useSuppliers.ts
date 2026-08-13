@@ -45,9 +45,9 @@ export function useSuppliers() {
     items,
     isLoading,
     error,
-    createSupplier: createMutation.mutate,
+    createSupplier: createMutation.mutateAsync,
     updateSupplier: (id: string, dto: UpdateSupplierDto) =>
-      updateMutation.mutate({ id, dto }),
-    deleteSupplier: deleteMutation.mutate,
+      updateMutation.mutateAsync({ id, dto }),
+    deleteSupplier: deleteMutation.mutateAsync,
   };
 }

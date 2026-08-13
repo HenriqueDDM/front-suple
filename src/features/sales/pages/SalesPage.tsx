@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ExternalLink, FileText, Gift, ShoppingCart } from "lucide-react";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { SearchInput } from "@/shared/components/SearchInput";
 import { PaymentMethodSelect } from "@/shared/components/PaymentMethodSelect";
 import { SalesProductCard } from "@/features/sales/components/SalesProductCard";
@@ -12,11 +13,13 @@ import { useSales } from "@/features/sales/hooks/useSales";
 import { useSaleInvoiceActions } from "@/features/settings/hooks/useFiscalSettings";
 import { useSearchFilter } from "@/shared/hooks/useSearchFilter";
 import { useCustomers } from "@/features/customers/hooks/useCustomers";
+import { useAuth } from "@/shared/contexts/AuthContext";
 import { WALK_IN_CUSTOMER_ID } from "@/shared/constants/sales";
-import { formatCurrency, paymentMethodLabel } from "@/shared/utils/format";
+import { formatCurrency, formatDateTime, paymentMethodLabel } from "@/shared/utils/format";
 import { parseNumericInput } from "@/shared/utils/number";
 import { ApiError } from "@/services";
-import type { PaymentMethod, Product } from "@/types";
+import { canManageSales } from "@/types/auth";
+import type { PaymentMethod, Product, Sale } from "@/types";
 import type { SaleInvoice } from "@/types/api";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -24,6 +27,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Textarea } from "@/shared/ui/textarea";
+import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -63,9 +67,11 @@ function invoiceToastDescription(invoice: SaleInvoice | null | undefined): strin
 }
 
 export function SalesPage() {
+  const { user } = useAuth();
+  const canCancel = canManageSales(user);
   const { items: products } = useProducts();
   const { items: customers } = useCustomers();
-  const { createSale } = useSales();
+  const { items: sales, createSale, cancelSale, isCancelling } = useSales();
   const { emitInvoice, isEmitting } = useSaleInvoiceActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [customerId, setCustomerId] = useState<string>(WALK_IN_CUSTOMER_ID);
@@ -78,6 +84,8 @@ export function SalesPage() {
   const [lastInvoice, setLastInvoice] = useState<SaleInvoice | null>(null);
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [lastSaleCode, setLastSaleCode] = useState<string | null>(null);
+  const [lastSaleStatus, setLastSaleStatus] = useState<Sale["status"]>("completed");
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
 
   const getProductSearchText = useCallback((product: Product) => product.name, []);
 
@@ -87,6 +95,14 @@ export function SalesPage() {
   );
 
   const filteredProducts = useSearchFilter(availableProducts, searchQuery, getProductSearchText);
+
+  const recentSales = useMemo(
+    () =>
+      [...sales]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 8),
+    [sales],
+  );
 
   const cartQtyByProduct = useMemo(() => {
     const map = new Map<string, number>();
@@ -215,6 +231,7 @@ export function SalesPage() {
       setLastInvoice(sale.invoice ?? null);
       setLastSaleId(sale.id);
       setLastSaleCode(sale.code);
+      setLastSaleStatus(sale.status ?? "completed");
       setCart([]);
       setDiscount(0);
       setNotes("");
@@ -251,6 +268,27 @@ export function SalesPage() {
       toast.error(error instanceof Error ? error.message : "Falha ao emitir NFC-e.");
     }
   }, [emitInvoice, lastSaleId]);
+
+  const handleConfirmCancel = useCallback(async () => {
+    if (!cancelTargetId) return;
+    try {
+      const cancelled = await cancelSale(cancelTargetId);
+      toast.success(`Venda ${cancelled.code} estornada. Estoque restaurado.`);
+      if (lastSaleId === cancelTargetId) {
+        setLastSaleStatus("cancelled");
+        setLastInvoice(null);
+      }
+      setCancelTargetId(null);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível estornar a venda.",
+      );
+    }
+  }, [cancelSale, cancelTargetId, lastSaleId]);
 
   return (
     <>
@@ -290,7 +328,7 @@ export function SalesPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={!lastSaleId || isEmitting}
+                  disabled={!lastSaleId || isEmitting || lastSaleStatus === "cancelled"}
                   onClick={() => void handleEmitInvoice()}
                 >
                   {isEmitting ? "Emitindo…" : "Emitir NFC-e"}
@@ -302,6 +340,20 @@ export function SalesPage() {
                     <ExternalLink className="h-4 w-4" /> DANFE
                   </a>
                 </Button>
+              ) : null}
+              {canCancel && lastSaleId && lastSaleStatus !== "cancelled" ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={isCancelling}
+                  onClick={() => setCancelTargetId(lastSaleId)}
+                >
+                  Estornar
+                </Button>
+              ) : null}
+              {lastSaleStatus === "cancelled" ? (
+                <Badge variant="secondary">Estornada</Badge>
               ) : null}
             </div>
           </CardContent>
@@ -467,6 +519,61 @@ export function SalesPage() {
           </Card>
         </div>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base">Vendas recentes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {recentSales.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma venda registrada ainda.</p>
+          ) : (
+            recentSales.map((sale) => (
+              <div
+                key={sale.id}
+                className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-medium">
+                    {sale.code}{" "}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      · {sale.customerName}
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDateTime(sale.createdAt)} · {paymentMethodLabel[sale.paymentMethod]} ·{" "}
+                    {formatCurrency(sale.total)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {sale.status === "cancelled" ? (
+                    <Badge variant="secondary">Estornada</Badge>
+                  ) : canCancel ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isCancelling}
+                      onClick={() => setCancelTargetId(sale.id)}
+                    >
+                      Estornar
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <ConfirmDialog
+        open={cancelTargetId !== null}
+        onOpenChange={(open) => !open && setCancelTargetId(null)}
+        title="Estornar venda?"
+        description="O estoque dos itens será devolvido. Se houver NFC-e autorizada, cancele a nota antes."
+        confirmLabel="Estornar"
+        onConfirm={() => void handleConfirmCancel()}
+      />
     </>
   );
 }

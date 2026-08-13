@@ -27,4 +27,8 @@ export class HttpSalesService implements ISalesService {
   create(dto: CreateSaleDto): Promise<Sale> {
     return this.client.post<Sale>(API_ENDPOINTS.sales.list, dto);
   }
+
+  cancel(id: string): Promise<Sale> {
+    return this.client.post<Sale>(API_ENDPOINTS.sales.cancel(id));
+  }
 }

@@ -30,7 +30,7 @@ import { toast } from "sonner";
 const PLAN_LABEL: Record<PlatformPlan, string> = {
   free: "Free",
   basic: "Essencial",
-  pro: "Completo IA",
+  pro: "Completo recompra",
   enterprise: "Enterprise",
 };
 

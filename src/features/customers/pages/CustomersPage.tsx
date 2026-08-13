@@ -4,6 +4,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { EntityListCard } from "@/shared/components/EntityListCard";
 import { DataTable } from "@/shared/components/DataTable";
+import { Loading } from "@/shared/components/Loading";
 import { CustomerTableRow } from "@/features/customers/components/CustomerTableRow";
 import { FormDialog } from "@/shared/components/forms/FormDialog";
 import { FormField } from "@/shared/components/forms/FormField";
@@ -18,6 +19,7 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { toast } from "sonner";
+import { ApiError } from "@/services/api/errors";
 
 const EMPTY_CUSTOMER: CreateCustomerDto = {
   name: "",
@@ -29,9 +31,10 @@ const EMPTY_CUSTOMER: CreateCustomerDto = {
 };
 
 export function CustomersPage() {
-  const { items, createCustomer } = useCustomers();
+  const { items, isLoading, createCustomer } = useCustomers();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { form, setField, reset } = useFormState(EMPTY_CUSTOMER);
 
   const getCustomerSearchText = useCallback(
@@ -46,16 +49,29 @@ export function CustomersPage() {
     setIsDialogOpen(true);
   }, [reset]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!form.name.trim()) {
       toast.error("Informe o nome do cliente.");
       return;
     }
 
-    createCustomer(form);
-    toast.success("Cliente cadastrado.");
-    reset(EMPTY_CUSTOMER);
-    setIsDialogOpen(false);
+    setSaving(true);
+    try {
+      await createCustomer(form);
+      toast.success("Cliente cadastrado.");
+      reset(EMPTY_CUSTOMER);
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível cadastrar o cliente.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }, [form, createCustomer, reset]);
 
   return (
@@ -74,6 +90,8 @@ export function CustomersPage() {
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Buscar por nome, e-mail ou CPF..."
+        isLoading={isLoading}
+        loadingState={<Loading rows={6} />}
         isEmpty={filteredCustomers.length === 0}
         emptyState={
           <EmptyState
@@ -110,6 +128,7 @@ export function CustomersPage() {
         title="Novo cliente"
         onSubmit={handleSave}
         className="sm:max-w-lg"
+        submitDisabled={saving}
       >
         <FormGrid>
           <FormField label="Nome" className="sm:col-span-2">

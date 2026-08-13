@@ -12,6 +12,7 @@ export {
   getSettingsService,
   getPlatformService,
   getFiscalService,
+  getUsersService,
 } from "./factory";
 export { queryKeys } from "./query-keys";
 export type {
@@ -25,5 +26,6 @@ export type {
   ISettingsService,
   IPlatformService,
   IFiscalService,
+  IUsersService,
 } from "./interfaces";
 

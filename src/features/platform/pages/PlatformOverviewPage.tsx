@@ -9,7 +9,7 @@ import { Button } from "@/shared/ui/button";
 const PLAN_LABEL: Record<string, string> = {
   free: "Free",
   basic: "Essencial",
-  pro: "Completo com IA",
+  pro: "Completo com recompra",
   enterprise: "Enterprise",
 };
 

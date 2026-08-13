@@ -13,6 +13,7 @@ import {
   HttpSuppliersService,
   HttpPlatformService,
   HttpFiscalService,
+  HttpUsersService,
 } from "@/services/http";
 import type {
   ICustomersService,
@@ -25,6 +26,7 @@ import type {
   ISuppliersService,
   IPlatformService,
   IFiscalService,
+  IUsersService,
 } from "@/services/interfaces";
 import {
   mockCustomersService,
@@ -37,6 +39,7 @@ import {
   mockSuppliersService,
   mockPlatformService,
   mockFiscalService,
+  mockUsersService,
 } from "@/services/mock";
 
 export { ensureApiReady } from "@/services/api/bootstrap";
@@ -91,4 +94,8 @@ export function getPlatformService(): IPlatformService {
 
 export function getFiscalService(): IFiscalService {
   return env.useMockApi ? mockFiscalService : new HttpFiscalService(getApiClient());
+}
+
+export function getUsersService(): IUsersService {
+  return env.useMockApi ? mockUsersService : new HttpUsersService(getApiClient());
 }

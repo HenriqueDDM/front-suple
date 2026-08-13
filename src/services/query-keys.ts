@@ -43,6 +43,9 @@ export const queryKeys = {
   settings: {
     store: ["settings", "store"] as const,
   },
+  users: {
+    all: ["users"] as const,
+  },
   fiscal: {
     settings: ["fiscal", "settings"] as const,
     sale: (saleId: string) => ["fiscal", "sale", saleId] as const,

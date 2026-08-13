@@ -5,6 +5,7 @@ import { EmptyState } from "@/shared/components/EmptyState";
 import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { EntityListCard } from "@/shared/components/EntityListCard";
 import { DataTable } from "@/shared/components/DataTable";
+import { Loading } from "@/shared/components/Loading";
 import { SupplierTableRow } from "@/features/suppliers/components/SupplierTableRow";
 import { FormDialog } from "@/shared/components/forms/FormDialog";
 import { FormField } from "@/shared/components/forms/FormField";
@@ -19,6 +20,7 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { toast } from "sonner";
+import { ApiError } from "@/services/api/errors";
 
 const EMPTY_SUPPLIER: CreateSupplierDto = {
   name: "",
@@ -30,11 +32,12 @@ const EMPTY_SUPPLIER: CreateSupplierDto = {
 };
 
 export function SuppliersPage() {
-  const { items, createSupplier, updateSupplier, deleteSupplier } = useSuppliers();
+  const { items, isLoading, createSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const { form, setField, reset } = useFormState(EMPTY_SUPPLIER);
 
   const getSupplierSearchText = useCallback(
@@ -63,29 +66,50 @@ export function SuppliersPage() {
     [reset],
   );
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!form.name.trim()) {
       toast.error("Informe o nome do fornecedor.");
       return;
     }
 
-    if (editingSupplier) {
-      updateSupplier(editingSupplier.id, form);
-      toast.success("Fornecedor atualizado.");
-    } else {
-      createSupplier(form);
-      toast.success("Fornecedor cadastrado.");
+    setSaving(true);
+    try {
+      if (editingSupplier) {
+        await updateSupplier(editingSupplier.id, form);
+        toast.success("Fornecedor atualizado.");
+      } else {
+        await createSupplier(form);
+        toast.success("Fornecedor cadastrado.");
+      }
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível salvar o fornecedor.",
+      );
+    } finally {
+      setSaving(false);
     }
-
-    setIsDialogOpen(false);
   }, [createSupplier, editingSupplier, form, updateSupplier]);
 
-  const handleConfirmDelete = useCallback(() => {
-    if (deleteTargetId) {
-      deleteSupplier(deleteTargetId);
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTargetId) return;
+    try {
+      await deleteSupplier(deleteTargetId);
       toast.success("Fornecedor excluído.");
+      setDeleteTargetId(null);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível excluir o fornecedor.",
+      );
     }
-    setDeleteTargetId(null);
   }, [deleteTargetId, deleteSupplier]);
 
   return (
@@ -104,6 +128,8 @@ export function SuppliersPage() {
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Buscar por nome, CNPJ ou contato..."
+        isLoading={isLoading}
+        loadingState={<Loading rows={6} />}
         isEmpty={filteredSuppliers.length === 0}
         emptyState={
           <EmptyState
@@ -145,6 +171,7 @@ export function SuppliersPage() {
         title={editingSupplier ? "Editar fornecedor" : "Novo fornecedor"}
         onSubmit={handleSave}
         className="sm:max-w-lg"
+        submitDisabled={saving}
       >
         <FormGrid>
           <FormField label="Nome" className="sm:col-span-2">

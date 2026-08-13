@@ -8,4 +8,5 @@ export { HttpReportsService } from "./http-reports.service";
 export { HttpSettingsService } from "./http-settings.service";
 export { HttpPlatformService } from "./http-platform.service";
 export { HttpFiscalService } from "./http-fiscal.service";
+export { HttpUsersService } from "./http-users.service";
 

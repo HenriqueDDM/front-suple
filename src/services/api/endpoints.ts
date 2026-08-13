@@ -23,6 +23,11 @@ export const API_ENDPOINTS = {
   sales: {
     list: "/sales",
     byId: (id: string) => `/sales/${id}`,
+    cancel: (id: string) => `/sales/${id}/cancel`,
+  },
+  users: {
+    list: "/users",
+    byId: (id: string) => `/users/${id}`,
   },
   stock: {
     movements: "/stock/movements",

@@ -68,6 +68,7 @@ export interface Sale {
   discount: number;
   total: number;
   paymentMethod: PaymentMethod;
+  status?: "completed" | "cancelled" | "pending";
   createdAt: string;
   notes?: string;
   invoice?: SaleInvoice | null;

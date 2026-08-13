@@ -8,8 +8,8 @@ import { useSettings } from "@/features/settings/hooks/useSettings";
 
 const PLAN_LABEL = {
   free: "Plano Free",
-  basic: "Plano Basic",
-  pro: "Plano Pro",
+  basic: "Plano Essencial",
+  pro: "Completo recompra",
   enterprise: "Plano Enterprise",
 } as const;
 

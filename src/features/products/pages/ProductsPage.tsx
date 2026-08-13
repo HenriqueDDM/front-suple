@@ -5,6 +5,7 @@ import { EmptyState } from "@/shared/components/EmptyState";
 import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { EntityListCard } from "@/shared/components/EntityListCard";
 import { DataTable } from "@/shared/components/DataTable";
+import { Loading } from "@/shared/components/Loading";
 import { ProductTableRow } from "@/features/products/components/ProductTableRow";
 import { ProductFormFields } from "@/features/products/components/ProductFormFields";
 import { FormDialog } from "@/shared/components/forms/FormDialog";
@@ -17,6 +18,7 @@ import type { Product } from "@/types";
 import { Button } from "@/shared/ui/button";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { toast } from "sonner";
+import { ApiError } from "@/services/api/errors";
 
 const EMPTY_PRODUCT: CreateProductDto = {
   name: "",
@@ -37,13 +39,14 @@ const EMPTY_PRODUCT: CreateProductDto = {
 };
 
 export function ProductsPage() {
-  const { items, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { items, isLoading, createProduct, updateProduct, deleteProduct } = useProducts();
   const { categories } = useProductCatalog();
   const { items: suppliers } = useSuppliers();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const { form, setField, reset } = useFormState(EMPTY_PRODUCT);
 
   const getProductSearchText = useCallback(
@@ -82,7 +85,7 @@ export function ProductsPage() {
     setDeleteTargetId(id);
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!form.name.trim()) {
       toast.error("Informe o nome do produto.");
       return;
@@ -92,23 +95,44 @@ export function ProductsPage() {
       return;
     }
 
-    if (editingProduct) {
-      updateProduct(editingProduct.id, form);
-      toast.success("Produto atualizado.");
-    } else {
-      createProduct(form);
-      toast.success("Produto cadastrado.");
+    setSaving(true);
+    try {
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, form);
+        toast.success("Produto atualizado.");
+      } else {
+        await createProduct(form);
+        toast.success("Produto cadastrado.");
+      }
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível salvar o produto.",
+      );
+    } finally {
+      setSaving(false);
     }
-
-    setIsDialogOpen(false);
   }, [editingProduct, form, createProduct, updateProduct]);
 
-  const handleConfirmDelete = useCallback(() => {
-    if (deleteTargetId) {
-      deleteProduct(deleteTargetId);
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTargetId) return;
+    try {
+      await deleteProduct(deleteTargetId);
       toast.success("Produto excluído.");
+      setDeleteTargetId(null);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível excluir o produto.",
+      );
     }
-    setDeleteTargetId(null);
   }, [deleteTargetId, deleteProduct]);
 
   return (
@@ -127,6 +151,8 @@ export function ProductsPage() {
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Buscar por nome, SKU, NCM ou código de barras..."
+        isLoading={isLoading}
+        loadingState={<Loading rows={6} />}
         isEmpty={filteredProducts.length === 0}
         emptyState={
           <EmptyState
@@ -170,6 +196,7 @@ export function ProductsPage() {
         title={editingProduct ? "Editar produto" : "Novo produto"}
         onSubmit={handleSave}
         className="sm:max-w-2xl"
+        submitDisabled={saving}
       >
         <ProductFormFields
           form={form}

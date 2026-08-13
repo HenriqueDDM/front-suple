@@ -14,8 +14,8 @@ import { ApiError } from "@/services/api/errors";
 export function LoginPage() {
   const { login, user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState(env.devEmail);
-  const [password, setPassword] = useState(env.devPassword);
+  const [email, setEmail] = useState(env.prefillDevCredentials ? env.devEmail : "");
+  const [password, setPassword] = useState(env.prefillDevCredentials ? env.devPassword : "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,9 +103,11 @@ export function LoginPage() {
               )}
             </Button>
 
-            <p className="text-center text-xs text-muted-foreground">
-              Conta demo do seed já preenchida. Use Entrar para acessar.
-            </p>
+            {env.prefillDevCredentials ? (
+              <p className="text-center text-xs text-muted-foreground">
+                Conta demo do seed já preenchida (apenas em desenvolvimento).
+              </p>
+            ) : null}
             <p className="text-center text-xs text-muted-foreground">
               <a
                 href={APP_SITE_URL}

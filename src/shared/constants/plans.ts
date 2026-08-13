@@ -41,8 +41,8 @@ export const PLANS: Plan[] = [
   },
   {
     id: "ia",
-    name: "Completo com IA",
-    summary: "Essencial + recompra automática e inteligência.",
+    name: "Completo com recompra",
+    summary: "Essencial + alertas de recompra e acompanhamento.",
     featured: true,
     badge: "Mais escolhido",
     listPriceMonthly: 1197,
@@ -55,7 +55,6 @@ export const PLANS: Plan[] = [
       "Aniversários e clientes inativos",
       "E-mail de confirmação a cada venda",
       "Relatório semanal automático",
-      "Sugestões de ofertas por IA",
       "Prioridade no suporte",
     ],
   },
@@ -71,7 +70,7 @@ export const PLANS: Plan[] = [
     priceLabel: "a partir de R$ 1.000",
     cta: "whatsapp",
     features: [
-      "Tudo do Completo com IA",
+      "Tudo do Completo com recompra",
       "Módulos sob medida pra sua loja",
       "Multi-loja em uma só conta",
       "White-label com a sua marca",

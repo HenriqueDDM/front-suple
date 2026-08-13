@@ -8,4 +8,5 @@ export type { IReportsService } from "./reports.service";
 export type { ISettingsService } from "./settings.service";
 export type { IPlatformService } from "./platform.service";
 export type { IFiscalService } from "./fiscal.service";
+export type { IUsersService } from "./users.service";
 

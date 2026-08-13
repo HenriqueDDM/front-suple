@@ -49,12 +49,12 @@ const FAQ_ITEMS = [
     a: "Sim. O Essencial foi pensado para o dia a dia: PDV, estoque, clientes e relatórios — sem complicação.",
   },
   {
-    q: "O que a IA faz de diferente?",
-    a: "No Completo com IA, o sistema ajuda na recompra: avisa quem está na hora de voltar, destaca inativos e envia resumos semanais.",
+    q: "O que o Completo com recompra faz a mais?",
+    a: "Além do Essencial, destaca clientes inativos e aniversariantes, avisa janelas de recompra e envia resumos semanais por e-mail — com base no histórico da loja.",
   },
   {
     q: "Posso migrar depois?",
-    a: "Pode. Comece no Essencial e suba para o Completo com IA ou peça implantação sob medida quando precisar.",
+    a: "Pode. Comece no Essencial e suba para o Completo com recompra ou peça implantação sob medida quando precisar.",
   },
 ];
 
@@ -236,7 +236,7 @@ export function LandingPage() {
             <FeatureCard
               icon={<RefreshCw className="h-5 w-5" />}
               title="Recompra"
-              desc="A IA ajuda a chamar quem está na janela de voltar a comprar."
+              desc="Alertas destacam quem está na janela de voltar a comprar."
             />
             <FeatureCard
               icon={<Sparkles className="h-5 w-5" />}
@@ -253,7 +253,7 @@ export function LandingPage() {
           <SectionHead
             eyebrow="Planos"
             title="Três caminhos. Um objetivo: vender de novo."
-            sub="Escolha a operação do dia a dia, o pacote com IA, ou a implantação sob medida."
+            sub="Escolha a operação do dia a dia, o pacote com recompra, ou a implantação sob medida."
           />
           <div className="mt-12 grid gap-5 lg:grid-cols-3">
             {PLANS.map((plan) => (
@@ -329,7 +329,7 @@ export function LandingPage() {
                 <span className="text-[#1B4DE0]"> Suplementos</span>
               </span>
             </div>
-            <p className="text-xs text-[#5a6478]">Sistemas que vendem por você · Tradutto IA</p>
+            <p className="text-xs text-[#5a6478]">Sistemas que vendem por você · Tradutto</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#5a6478]">
             <a href="#recursos" className="hover:text-[#0a1430]">
