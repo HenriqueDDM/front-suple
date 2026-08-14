@@ -47,7 +47,7 @@ export const mockFiscalService: IFiscalService = {
     return { ...settings };
   },
 
-  async emitForSale(saleId: string) {
+  async emitForSale(saleId: string, _consumerCpf?: string) {
     const invoice: SaleInvoice = {
       id: `inv-${saleId}`,
       saleId,

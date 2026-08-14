@@ -47,12 +47,16 @@ export function useSaleInvoiceActions() {
   const cancelMutation = useMutation({
     mutationFn: ({ id, justificativa }: { id: string; justificativa: string }) =>
       fiscalService.cancelInvoice(id, justificativa),
+    onSuccess: (invoice) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.fiscal.sale(invoice.saleId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.sales.all });
+    },
   });
 
   return {
     emitInvoice: emitMutation.mutateAsync,
     cancelInvoice: cancelMutation.mutateAsync,
     isEmitting: emitMutation.isPending,
-    isCancelling: cancelMutation.isPending,
+    isCancellingInvoice: cancelMutation.isPending,
   };
 }

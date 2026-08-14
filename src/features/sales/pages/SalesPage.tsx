@@ -27,6 +27,13 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Textarea } from "@/shared/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { Badge } from "@/shared/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -72,9 +79,15 @@ export function SalesPage() {
   const { items: products } = useProducts();
   const { items: customers } = useCustomers();
   const { items: sales, createSale, cancelSale, isCancelling } = useSales();
-  const { emitInvoice, isEmitting } = useSaleInvoiceActions();
+  const {
+    emitInvoice,
+    cancelInvoice,
+    isEmitting,
+    isCancellingInvoice,
+  } = useSaleInvoiceActions();
   const [searchQuery, setSearchQuery] = useState("");
   const [customerId, setCustomerId] = useState<string>(WALK_IN_CUSTOMER_ID);
+  const [consumerCpf, setConsumerCpf] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
@@ -86,6 +99,11 @@ export function SalesPage() {
   const [lastSaleCode, setLastSaleCode] = useState<string | null>(null);
   const [lastSaleStatus, setLastSaleStatus] = useState<Sale["status"]>("completed");
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [invoiceCancelOpen, setInvoiceCancelOpen] = useState(false);
+  const [invoiceCancelReason, setInvoiceCancelReason] = useState(
+    "Erro na emissão da venda / solicitação do cliente",
+  );
+  const [pendingSaleCancelAfterInvoice, setPendingSaleCancelAfterInvoice] = useState(false);
 
   const getProductSearchText = useCallback((product: Product) => product.name, []);
 
@@ -114,6 +132,24 @@ export function SalesPage() {
 
   const paidLines = useMemo(() => cart.filter((line) => !line.isGift), [cart]);
   const giftLines = useMemo(() => cart.filter((line) => line.isGift), [cart]);
+
+  const handleCustomerChange = useCallback(
+    (nextCustomerId: string) => {
+      setCustomerId(nextCustomerId);
+      if (nextCustomerId === WALK_IN_CUSTOMER_ID) {
+        setConsumerCpf("");
+        return;
+      }
+      const customer = customers.find((item) => item.id === nextCustomerId);
+      setConsumerCpf(customer?.cpf?.replace(/\D/g, "") ?? "");
+    },
+    [customers],
+  );
+
+  const digitsOnlyCpf = consumerCpf.replace(/\D/g, "");
+  const canCancelInvoice =
+    Boolean(lastInvoice) &&
+    (lastInvoice?.status === "authorized" || lastInvoice?.status === "simulated");
 
   const addToCart = useCallback(
     (product: Product) => {
@@ -236,6 +272,7 @@ export function SalesPage() {
       setDiscount(0);
       setNotes("");
       setCustomerId(WALK_IN_CUSTOMER_ID);
+      setConsumerCpf("");
       setIsAddingGift(false);
     } catch (error) {
       const message =
@@ -252,8 +289,15 @@ export function SalesPage() {
 
   const handleEmitInvoice = useCallback(async () => {
     if (!lastSaleId) return;
+    if (digitsOnlyCpf && digitsOnlyCpf.length !== 11) {
+      toast.error("CPF na nota deve ter 11 dígitos (ou deixe em branco).");
+      return;
+    }
     try {
-      const invoice = await emitInvoice({ saleId: lastSaleId });
+      const invoice = await emitInvoice({
+        saleId: lastSaleId,
+        consumerCpf: digitsOnlyCpf || undefined,
+      });
       setLastInvoice(invoice);
       toast.success(`NFC-e ${INVOICE_STATUS_LABEL[invoice.status]}`, {
         description: invoice.number ? `Nº ${invoice.number}` : undefined,
@@ -267,10 +311,74 @@ export function SalesPage() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Falha ao emitir NFC-e.");
     }
-  }, [emitInvoice, lastSaleId]);
+  }, [digitsOnlyCpf, emitInvoice, lastSaleId]);
+
+  const handleConfirmCancelInvoice = useCallback(async () => {
+    if (!lastInvoice) return;
+    const reason = invoiceCancelReason.trim();
+    if (reason.length < 15) {
+      toast.error("A justificativa precisa ter pelo menos 15 caracteres.");
+      return;
+    }
+
+    try {
+      const cancelledInvoice = await cancelInvoice({
+        id: lastInvoice.id,
+        justificativa: reason,
+      });
+      setLastInvoice(cancelledInvoice);
+      toast.success("NFC-e cancelada.");
+      setInvoiceCancelOpen(false);
+
+      if (pendingSaleCancelAfterInvoice && lastSaleId) {
+        const cancelledSale = await cancelSale(lastSaleId);
+        toast.success(`Venda ${cancelledSale.code} estornada. Estoque restaurado.`);
+        setLastSaleStatus("cancelled");
+        setCancelTargetId(null);
+      }
+      setPendingSaleCancelAfterInvoice(false);
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Não foi possível cancelar a NFC-e.",
+      );
+    }
+  }, [
+    cancelInvoice,
+    cancelSale,
+    invoiceCancelReason,
+    lastInvoice,
+    lastSaleId,
+    pendingSaleCancelAfterInvoice,
+  ]);
 
   const handleConfirmCancel = useCallback(async () => {
     if (!cancelTargetId) return;
+
+    const saleToCancel =
+      cancelTargetId === lastSaleId
+        ? { id: cancelTargetId, invoice: lastInvoice }
+        : {
+            id: cancelTargetId,
+            invoice: null as SaleInvoice | null,
+          };
+
+    const blockingInvoice =
+      saleToCancel.invoice &&
+      (saleToCancel.invoice.status === "authorized" ||
+        saleToCancel.invoice.status === "simulated")
+        ? saleToCancel.invoice
+        : null;
+
+    if (blockingInvoice && cancelTargetId === lastSaleId) {
+      setPendingSaleCancelAfterInvoice(true);
+      setInvoiceCancelOpen(true);
+      return;
+    }
+
     try {
       const cancelled = await cancelSale(cancelTargetId);
       toast.success(`Venda ${cancelled.code} estornada. Estoque restaurado.`);
@@ -280,15 +388,25 @@ export function SalesPage() {
       }
       setCancelTargetId(null);
     } catch (error) {
-      toast.error(
+      const message =
         error instanceof ApiError
           ? error.message
           : error instanceof Error
             ? error.message
-            : "Não foi possível estornar a venda.",
-      );
+            : "Não foi possível estornar a venda.";
+      if (message.toLowerCase().includes("nfc-e")) {
+        toast.error(message, {
+          description: "Cancele a NFC-e nesta venda e tente estornar de novo.",
+        });
+        if (cancelTargetId === lastSaleId && lastInvoice) {
+          setPendingSaleCancelAfterInvoice(true);
+          setInvoiceCancelOpen(true);
+        }
+        return;
+      }
+      toast.error(message);
     }
-  }, [cancelSale, cancelTargetId, lastSaleId]);
+  }, [cancelSale, cancelTargetId, lastInvoice, lastSaleId]);
 
   return (
     <>
@@ -341,12 +459,26 @@ export function SalesPage() {
                   </a>
                 </Button>
               ) : null}
+              {canCancel && canCancelInvoice ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isCancellingInvoice}
+                  onClick={() => {
+                    setPendingSaleCancelAfterInvoice(false);
+                    setInvoiceCancelOpen(true);
+                  }}
+                >
+                  Cancelar NFC-e
+                </Button>
+              ) : null}
               {canCancel && lastSaleId && lastSaleStatus !== "cancelled" ? (
                 <Button
                   type="button"
                   variant="destructive"
                   size="sm"
-                  disabled={isCancelling}
+                  disabled={isCancelling || isCancellingInvoice}
                   onClick={() => setCancelTargetId(lastSaleId)}
                 >
                   Estornar
@@ -369,8 +501,24 @@ export function SalesPage() {
                 <CustomerSearchSelect
                   customers={customers}
                   value={customerId}
-                  onChange={setCustomerId}
+                  onChange={handleCustomerChange}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="consumer-cpf">CPF na NFC-e (opcional)</Label>
+                <Input
+                  id="consumer-cpf"
+                  inputMode="numeric"
+                  placeholder="00000000000"
+                  value={consumerCpf}
+                  onChange={(event) =>
+                    setConsumerCpf(event.target.value.replace(/\D/g, "").slice(0, 11))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Preenchido automaticamente se o cliente tiver CPF cadastrado.
+                </p>
               </div>
 
               <div className="flex gap-2">
@@ -570,10 +718,68 @@ export function SalesPage() {
         open={cancelTargetId !== null}
         onOpenChange={(open) => !open && setCancelTargetId(null)}
         title="Estornar venda?"
-        description="O estoque dos itens será devolvido. Se houver NFC-e autorizada, cancele a nota antes."
+        description="O estoque dos itens será devolvido. Se houver NFC-e autorizada/simulada, pediremos cancelar a nota antes."
         confirmLabel="Estornar"
         onConfirm={() => void handleConfirmCancel()}
       />
+
+      <Dialog
+        open={invoiceCancelOpen}
+        onOpenChange={(open) => {
+          setInvoiceCancelOpen(open);
+          if (!open) setPendingSaleCancelAfterInvoice(false);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingSaleCancelAfterInvoice
+                ? "Cancelar NFC-e e estornar"
+                : "Cancelar NFC-e"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {pendingSaleCancelAfterInvoice
+                ? "Para estornar esta venda, a NFC-e precisa ser cancelada primeiro."
+                : "Informe a justificativa do cancelamento (mínimo 15 caracteres)."}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="invoice-cancel-reason">Justificativa</Label>
+              <Textarea
+                id="invoice-cancel-reason"
+                value={invoiceCancelReason}
+                onChange={(event) => setInvoiceCancelReason(event.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setInvoiceCancelOpen(false);
+                setPendingSaleCancelAfterInvoice(false);
+              }}
+            >
+              Voltar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isCancellingInvoice || isCancelling}
+              onClick={() => void handleConfirmCancelInvoice()}
+            >
+              {isCancellingInvoice
+                ? "Cancelando…"
+                : pendingSaleCancelAfterInvoice
+                  ? "Cancelar nota e estornar"
+                  : "Cancelar NFC-e"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
